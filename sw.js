@@ -1,4 +1,4 @@
-const CACHE_NAME = 'micalorias-shell-v4.0';
+const CACHE_NAME = 'micalorias-shell-v4.0.1';
 const ASSETS = [
   './',
   './index.html',
