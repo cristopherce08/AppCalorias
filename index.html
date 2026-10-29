@@ -14,9 +14,18 @@
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="stylesheet" href="./styles.css" />
-  <title>MiCalorías 3.0 — Diario, Proteínas, Peso y Calculadora</title>
+  <title>MiCalorías 3.1 — Diario, Proteínas, Peso y Calculadora</title>
 </head>
 <body>
+  <!-- AVISO DISCRETO DE ACTUALIZACIÓN DISPONIBLE -->
+  <aside id="update-banner" class="update-banner" hidden role="status" aria-live="polite">
+    <div class="update-banner-info">
+      <span class="update-banner-icon" aria-hidden="true">✨</span>
+      <span class="update-banner-text">Nueva versión disponible</span>
+    </div>
+    <button type="button" id="btn-apply-update" class="update-banner-btn">Actualizar</button>
+  </aside>
+
   <div class="app-shell">
     <header class="app-header">
       <div class="brand">
@@ -439,7 +448,7 @@
           <strong>Privacidad total</strong>
           <p>Sin cuentas, sin Firebase, sin rastreadores, sin analítica ni sincronización remota. Tu peso e información nutricional nunca salen de tu dispositivo.</p>
         </div>
-        <div class="version">MiCalorías · Versión 3.0 (Calorías, Proteínas, Peso & Calculadora)</div>
+        <div class="version">MiCalorías · Versión 3.1 (Actualización Automática PWA)</div>
       </section>
     </main>
 

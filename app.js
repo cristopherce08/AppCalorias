@@ -2464,10 +2464,155 @@ function attachEvents() {
     $(sel).addEventListener('input', updateEditEntryPreview);
   });
   $('#entry-form').addEventListener('submit', saveEditEntry);
+
+  // Botón de aplicación manual de actualización PWA
+  $('#btn-apply-update').addEventListener('click', applyPendingUpdate);
 }
 
 // -------------------------------------------------------------
-// 16. INICIALIZACIÓN DE LA APLICACIÓN
+// 16. GESTIÓN INTELIGENTE DE ACTUALIZACIONES PWA (iOS Safari & SW)
+// -------------------------------------------------------------
+let swRegistration = null;
+let waitingWorker = null;
+let lastUpdateCheck = 0;
+const MIN_CHECK_INTERVAL_MS = 60 * 1000; // Mínimo 1 minuto entre consultas para evitar peticiones redundantes
+
+function isUserBusy() {
+  if (isSaving || isExporting) return true;
+  if (Array.isArray(stagedItems) && stagedItems.length > 0) return true;
+
+  // Comprobar si algún diálogo modal se encuentra abierto
+  const openDialogs = document.querySelectorAll('dialog[open]');
+  if (openDialogs.length > 0) return true;
+
+  // Comprobar si hay foco activo en campos de entrada
+  const active = document.activeElement;
+  if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT')) {
+    return true;
+  }
+
+  return false;
+}
+
+function showUpdateBanner() {
+  const banner = $('#update-banner');
+  if (banner) {
+    banner.hidden = false;
+  }
+}
+
+function hideUpdateBanner() {
+  const banner = $('#update-banner');
+  if (banner) {
+    banner.hidden = true;
+  }
+}
+
+function applyPendingUpdate() {
+  const targetWorker = waitingWorker || swRegistration?.waiting;
+  if (targetWorker) {
+    targetWorker.postMessage({ type: 'SKIP_WAITING' });
+  }
+}
+
+function checkPendingUpdateOnIdle() {
+  if (waitingWorker && !isUserBusy()) {
+    showUpdateBanner();
+  }
+}
+
+function handleWaitingWorker(worker) {
+  waitingWorker = worker;
+
+  if (!isUserBusy()) {
+    // Si no hay tareas activas en curso, permitimos aplicar la nueva versión automáticamente
+    applyPendingUpdate();
+  } else {
+    // Si está ocupado registrando una comida o editando información, mostramos aviso sin forzar recarga
+    showUpdateBanner();
+  }
+}
+
+async function checkForUpdates(registration = swRegistration) {
+  if (!registration || !navigator.onLine) return;
+  const now = Date.now();
+  if (now - lastUpdateCheck < MIN_CHECK_INTERVAL_MS) return;
+  lastUpdateCheck = now;
+
+  try {
+    await registration.update();
+  } catch (err) {
+    // Sin conexión o fallo temporal del servidor; se preserva la sesión local sin errores visibles
+    console.debug('Comprobación de actualización omitida o sin conexión:', err);
+  }
+}
+
+function setupServiceWorker() {
+  if (!('serviceWorker' in navigator)) return;
+
+  // Evitar ciclos infinitos de recarga: bandera única por ciclo de vida de la página
+  let isRefreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (isRefreshing) return;
+    isRefreshing = true;
+    window.location.reload();
+  });
+
+  navigator.serviceWorker.register('./sw.js', { scope: './' })
+    .then(registration => {
+      swRegistration = registration;
+
+      // 1. Detectar si ya hay un nuevo Service Worker esperando ser activado
+      if (registration.waiting) {
+        handleWaitingWorker(registration.waiting);
+      }
+
+      // 2. Escuchar cuando se descubre un Service Worker nuevo
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing;
+        if (!newWorker) return;
+
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed') {
+            // Solo si ya hay un controlador previo activo se trata de una actualización
+            if (navigator.serviceWorker.controller) {
+              handleWaitingWorker(newWorker);
+            }
+          }
+        });
+      });
+
+      // 3. Comprobación inicial si hay conexión
+      checkForUpdates(registration);
+
+      // 4. Comprobaciones inteligentes al volver a primer plano (multitarea iOS) o recuperar conexión
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          if (waitingWorker && !isUserBusy()) {
+            applyPendingUpdate();
+          } else {
+            checkForUpdates(registration);
+          }
+        }
+      });
+
+      window.addEventListener('focus', () => {
+        if (waitingWorker && !isUserBusy()) {
+          applyPendingUpdate();
+        } else {
+          checkForUpdates(registration);
+        }
+      });
+
+      window.addEventListener('online', () => {
+        checkForUpdates(registration);
+      });
+    })
+    .catch(err => console.warn('Offline no disponible aún:', err));
+}
+
+// -------------------------------------------------------------
+// 17. INICIALIZACIÓN DE LA APLICACIÓN
 // -------------------------------------------------------------
 async function init() {
   try {
@@ -2475,11 +2620,7 @@ async function init() {
     attachEvents();
     await refresh();
     await checkStorage();
-
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js', { scope: './' })
-        .catch(err => console.warn('Offline no disponible aún:', err));
-    }
+    setupServiceWorker();
   } catch (error) {
     console.error(error);
     $('#main-content').innerHTML = `
