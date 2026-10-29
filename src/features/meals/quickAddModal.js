@@ -5,7 +5,7 @@ import { getState, setState, refreshState, beginAsyncOperation, endAsyncOperatio
 import { navigateTo } from '../../app/router.js';
 import { fmt, esc } from '../../utils/formatting.js';
 import { makeId, keyName } from '../../utils/dates.js';
-import { computeNutrition, sumKcal, sumProtein, MEALS } from '../../utils/nutrition.js';
+import { computeNutrition, convertTotalToPer100, sumKcal, sumProtein, MEALS } from '../../utils/nutrition.js';
 import { saveEntry } from '../../services/database/entriesRepo.js';
 import { saveFood } from '../../services/database/foodsRepo.js';
 import { openModal, closeModal } from '../../components/Modal.js';
@@ -240,8 +240,28 @@ function addStagedItemFromManual() {
   }
 
   let amount, unit, kcalPer100 = null, proteinPer100 = null, kcalPerPortion = null, proteinPerPortion = null, portionGrams = null;
+  let totalKcalInput = null, totalProteinInput = null;
 
-  if (baseType === 'weight_volume') {
+  if (baseType === 'total_consumed') {
+    amount = Number($('#manual-t-amount')?.value);
+    unit = $('#manual-t-unit')?.value || 'g';
+    const kcalRaw = Number($('#manual-t-kcal')?.value);
+    const protRaw = $('#manual-t-protein')?.value.trim() || '';
+
+    if (!Number.isFinite(amount) || amount <= 0 || !Number.isFinite(kcalRaw) || kcalRaw < 0) {
+      toast('Verifica la cantidad y las calorías totales consumidas');
+      return;
+    }
+
+    totalKcalInput = kcalRaw;
+    if (protRaw !== '' && Number.isFinite(Number(protRaw)) && Number(protRaw) >= 0) {
+      totalProteinInput = Number(protRaw);
+    }
+
+    const equiv = convertTotalToPer100(totalKcalInput, totalProteinInput, amount);
+    kcalPer100 = equiv.kcalPer100;
+    proteinPer100 = equiv.proteinPer100;
+  } else if (baseType === 'weight_volume') {
     amount = Number($('#manual-w-amount')?.value);
     unit = $('#manual-w-unit')?.value || 'g';
     const kcalRaw = Number($('#manual-w-kcal')?.value);
@@ -281,7 +301,9 @@ function addStagedItemFromManual() {
     kcalPer100,
     proteinPer100,
     kcalPerPortion,
-    proteinPerPortion
+    proteinPerPortion,
+    totalKcal: totalKcalInput,
+    totalProtein: totalProteinInput
   });
 
   const { currentDate } = getState();
@@ -299,6 +321,8 @@ function addStagedItemFromManual() {
     proteinPer100,
     kcalPerPortion,
     proteinPerPortion,
+    totalKcal: totalKcalInput,
+    totalProtein: totalProteinInput,
     kcal: computed.kcal,
     protein: computed.protein,
     saveToLibrary,
@@ -317,14 +341,37 @@ function addStagedItemFromManual() {
 
 function updateManualPreview() {
   const baseType = document.querySelector('input[name="manual-base-type"]:checked')?.value || 'weight_volume';
-  let amount = 0, kcalBase = 0, protBase = null;
+  let amount = 0, kcalBase = 0, protBase = null, totalKcal = null, totalProtein = null;
 
-  if (baseType === 'weight_volume') {
+  const hint = $('#manual-t-equiv-hint');
+  const hintText = $('#manual-t-equiv-text');
+
+  if (baseType === 'total_consumed') {
+    amount = Number($('#manual-t-amount')?.value) || 0;
+    const unit = $('#manual-t-unit')?.value || 'g';
+    totalKcal = Number($('#manual-t-kcal')?.value) || 0;
+    const p = $('#manual-t-protein')?.value.trim();
+    if (p !== '' && Number.isFinite(Number(p)) && Number(p) >= 0) {
+      totalProtein = Number(p);
+    }
+
+    if (hint && hintText) {
+      if (amount > 0 && totalKcal >= 0) {
+        const equiv = convertTotalToPer100(totalKcal, totalProtein, amount);
+        hint.hidden = false;
+        hintText.textContent = `${fmt(equiv.kcalPer100)} kcal${equiv.proteinPer100 !== null ? ' · ' + fmt(equiv.proteinPer100) + ' g prot' : ''} por 100 ${unit}`;
+      } else {
+        hint.hidden = true;
+      }
+    }
+  } else if (baseType === 'weight_volume') {
+    if (hint) hint.hidden = true;
     amount = Number($('#manual-w-amount')?.value) || 0;
     kcalBase = Number($('#manual-w-kcal')?.value) || 0;
     const p = $('#manual-w-protein')?.value.trim();
     if (p && Number.isFinite(Number(p))) protBase = Number(p);
   } else {
+    if (hint) hint.hidden = true;
     amount = Number($('#manual-p-amount')?.value) || 0;
     kcalBase = Number($('#manual-p-kcal')?.value) || 0;
     const p = $('#manual-p-protein')?.value.trim();
@@ -337,7 +384,9 @@ function updateManualPreview() {
     kcalPer100: baseType === 'weight_volume' ? kcalBase : null,
     proteinPer100: baseType === 'weight_volume' ? protBase : null,
     kcalPerPortion: baseType === 'portion' ? kcalBase : null,
-    proteinPerPortion: baseType === 'portion' ? protBase : null
+    proteinPerPortion: baseType === 'portion' ? protBase : null,
+    totalKcal: baseType === 'total_consumed' ? totalKcal : null,
+    totalProtein: baseType === 'total_consumed' ? totalProtein : null
   });
 
   const prevKcal = $('#manual-preview-kcal');
@@ -408,8 +457,8 @@ async function saveEntireMeal() {
           id: existing?.id || makeId(),
           name: item.name,
           brand: item.brand || '',
-          baseType: item.baseType,
-          unit: item.baseType === 'weight_volume' ? item.unit : 'g',
+          baseType: item.baseType === 'portion' ? 'portion' : 'weight_volume',
+          unit: item.baseType === 'portion' ? 'g' : (item.unit || 'g'),
           portionUnit: item.baseType === 'portion' ? item.unit : '',
           portionGrams: item.portionGrams || null,
           kcalPer100: item.kcalPer100,
@@ -511,14 +560,16 @@ export function initQuickAddListeners() {
     btnAddStagedLib.addEventListener('click', addStagedItemFromLibrary);
   }
 
-  // Cambio de tipo en formulario manual (porción vs peso/volumen)
+  // Cambio de tipo en formulario manual (porción vs peso/volumen vs valores totales)
   document.querySelectorAll('input[name="manual-base-type"]').forEach(r => {
     r.addEventListener('change', () => {
-      const isPortion = r.value === 'portion';
+      const mode = r.value;
       const fWeight = $('#manual-fields-weight') || $('#manual-weight-fields');
       const fPortion = $('#manual-fields-portion') || $('#manual-portion-fields');
-      if (fWeight) fWeight.hidden = isPortion;
-      if (fPortion) fPortion.hidden = !isPortion;
+      const fTotal = $('#manual-fields-total') || $('#manual-total-fields');
+      if (fWeight) fWeight.hidden = (mode !== 'weight_volume');
+      if (fPortion) fPortion.hidden = (mode !== 'portion');
+      if (fTotal) fTotal.hidden = (mode !== 'total_consumed');
       updateManualPreview();
     });
   });
@@ -531,8 +582,19 @@ export function initQuickAddListeners() {
     });
   }
 
+  const manualTUnit = $('#manual-t-unit');
+  if (manualTUnit) {
+    manualTUnit.addEventListener('change', () => {
+      updateManualPreview();
+    });
+  }
+
   // Inputs en formulario manual
-  ['#manual-w-amount', '#manual-w-kcal', '#manual-w-protein', '#manual-p-amount', '#manual-p-kcal', '#manual-p-protein'].forEach(sel => {
+  [
+    '#manual-w-amount', '#manual-w-kcal', '#manual-w-protein',
+    '#manual-p-amount', '#manual-p-kcal', '#manual-p-protein',
+    '#manual-t-amount', '#manual-t-kcal', '#manual-t-protein'
+  ].forEach(sel => {
     const el = $(sel);
     if (el) el.addEventListener('input', updateManualPreview);
   });

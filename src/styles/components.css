@@ -177,6 +177,15 @@
   border-radius: 13px;
   margin-bottom: 15px;
 }
+.base-type-toggle.tri-toggle {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+.base-type-toggle.tri-toggle .radio-pill span {
+  padding: 9px 4px;
+  font-size: 11.5px;
+  letter-spacing: -0.2px;
+}
 .radio-pill {
   position: relative;
   text-align: center;

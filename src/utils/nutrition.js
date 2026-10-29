@@ -11,6 +11,33 @@ export const MEALS = [
 ];
 
 /**
+ * Convierte valores totales consumidos a densidad equivalente por 100 g/ml
+ * Preserva precisión interna y soporta proteínas nulas/desconocidas.
+ * @param {number} totalKcal 
+ * @param {number|string|null} totalProtein 
+ * @param {number} amount 
+ * @returns {{ kcalPer100: number, proteinPer100: number|null }}
+ */
+export function convertTotalToPer100(totalKcal, totalProtein, amount) {
+  const amt = Number(amount);
+  if (!Number.isFinite(amt) || amt <= 0) {
+    return { kcalPer100: 0, proteinPer100: null };
+  }
+  const kcalNum = Number(totalKcal);
+  const kcalPer100 = Number.isFinite(kcalNum) ? (kcalNum * 100) / amt : 0;
+
+  let proteinPer100 = null;
+  if (totalProtein !== null && totalProtein !== undefined && totalProtein !== '') {
+    const protNum = Number(totalProtein);
+    if (Number.isFinite(protNum) && protNum >= 0) {
+      proteinPer100 = (protNum * 100) / amt;
+    }
+  }
+
+  return { kcalPer100, proteinPer100 };
+}
+
+/**
  * Calcula calorías y proteínas a partir de los datos de un ingrediente o porción
  * @param {Object} item 
  * @returns {{ kcal: number, protein: number|null }}
@@ -19,22 +46,44 @@ export function computeNutrition(item) {
   if (!item) return { kcal: 0, protein: null };
   const amount = Number(item.amount) || 0;
   const isPortion = item.baseType === 'portion';
+  const isTotal = item.baseType === 'total_consumed';
   let kcal = 0;
   let protein = null;
 
-  if (isPortion) {
+  if (isTotal) {
+    if (item.totalKcal !== undefined && item.totalKcal !== null && item.totalKcal !== '' && Number.isFinite(Number(item.totalKcal))) {
+      kcal = Number(item.totalKcal);
+    } else if (item.kcal !== undefined && item.kcal !== null && item.kcal !== '' && Number.isFinite(Number(item.kcal))) {
+      kcal = Number(item.kcal);
+    } else if (Number.isFinite(Number(item.kcalPer100)) && amount > 0) {
+      kcal = (amount * Number(item.kcalPer100)) / 100;
+    }
+
+    if (item.totalProtein !== undefined && item.totalProtein !== null && item.totalProtein !== '') {
+      const p = Number(item.totalProtein);
+      if (Number.isFinite(p) && p >= 0) protein = p;
+    } else if (item.protein !== undefined && item.protein !== null && item.protein !== '') {
+      const p = Number(item.protein);
+      if (Number.isFinite(p) && p >= 0) protein = p;
+    } else if (item.proteinPer100 !== null && item.proteinPer100 !== undefined && item.proteinPer100 !== '' && amount > 0) {
+      const p = Number(item.proteinPer100);
+      if (Number.isFinite(p) && p >= 0) protein = (amount * p) / 100;
+    }
+  } else if (isPortion) {
     const kpp = Number(item.kcalPerPortion);
     if (Number.isFinite(kpp)) kcal = amount * kpp;
     const ppp = item.proteinPerPortion;
     if (ppp !== null && ppp !== undefined && ppp !== '' && Number.isFinite(Number(ppp))) {
-      protein = amount * Number(ppp);
+      const pVal = Number(ppp);
+      if (pVal >= 0) protein = amount * pVal;
     }
   } else {
     const kp100 = Number(item.kcalPer100);
     if (Number.isFinite(kp100)) kcal = (amount * kp100) / 100;
     const pp100 = item.proteinPer100;
     if (pp100 !== null && pp100 !== undefined && pp100 !== '' && Number.isFinite(Number(pp100))) {
-      protein = (amount * Number(pp100)) / 100;
+      const pVal = Number(pp100);
+      if (pVal >= 0) protein = (amount * pVal) / 100;
     }
   }
 

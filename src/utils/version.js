@@ -10,4 +10,4 @@ export const APP_VERSION = '4.0';
 export const APP_NAME = 'Kalora';
 export const APP_DISPLAY_VERSION = 'Kalora 4.0';
 export const DB_SCHEMA_VERSION = 3;
-export const SW_CACHE_NAME = 'kalora-shell-v4.0.2';
+export const SW_CACHE_NAME = 'kalora-shell-v4.0.3';

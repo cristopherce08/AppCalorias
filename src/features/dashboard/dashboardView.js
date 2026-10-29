@@ -147,7 +147,9 @@ export function renderDashboard() {
       const protVal = (e.protein !== undefined && e.protein !== null) ? e.protein : computeNutrition(e).protein;
 
       let baseTxt = '';
-      if (e.baseType === 'portion') {
+      if (e.baseType === 'total_consumed') {
+        baseTxt = `Valores totales (${fmt(e.kcalPer100)} kcal / 100 ${esc(e.unit)})`;
+      } else if (e.baseType === 'portion') {
         baseTxt = `${fmt(e.kcalPerPortion)} kcal${e.proteinPerPortion ? ' · ' + fmt(e.proteinPerPortion) + ' g prot' : ''} / ${esc(e.unit)}`;
       } else {
         baseTxt = `${fmt(e.kcalPer100)} kcal${e.proteinPer100 ? ' · ' + fmt(e.proteinPer100) + ' g prot' : ''} / 100 ${esc(e.unit)}`;

@@ -127,6 +127,33 @@ try {
   assert.match(totalProt, /13\.5/);
   console.log('[PASS 4/10] Totales de calorías y proteínas reflejados reactivamente en "Hoy"');
 
+  console.log('[E2E 4b/10] Registrando alimento con modalidad "Valores totales consumidos" (600g / 180 kcal / 0g prot)...');
+  await page.click('#btn-quick-add-main');
+  await page.waitForSelector('#quick-add-dialog[open]');
+  await page.click('#tab-mode-manual');
+  await page.check('input[name="manual-base-type"][value="total_consumed"]');
+
+  await page.fill('#manual-name', 'Fresco de carambola');
+  await page.fill('#manual-brand', 'Casero');
+  await page.fill('#manual-t-amount', '600');
+  await page.selectOption('#manual-t-unit', 'g');
+  await page.fill('#manual-t-kcal', '180');
+  await page.fill('#manual-t-protein', '0');
+
+  const prevKcal = await page.locator('#manual-preview-kcal').textContent();
+  const prevProt = await page.locator('#manual-preview-protein').textContent();
+  assert.match(prevKcal, /180/);
+  assert.match(prevProt, /0/);
+
+  await page.click('#btn-add-manual-item');
+  await page.waitForSelector('#staged-section:not([hidden])');
+  await page.click('#btn-save-entire-meal');
+  await page.waitForSelector('#quick-add-dialog', { state: 'hidden' });
+
+  // 375 (de avena) + 180 (de carambola) = 555 kcal
+  await page.waitForFunction(() => document.querySelector('#day-total-kcal')?.textContent?.includes('555'));
+  console.log('[PASS 4b/10] Alimento con valores totales registrado e integrado en el diario (555 kcal)');
+
   console.log('[E2E 5/10] Registrando pesaje corporal...');
   await page.click('[data-view="peso"]');
   await page.click('#btn-add-weight');
@@ -161,9 +188,9 @@ try {
   await page.reload();
   await page.waitForLoadState('networkidle');
 
-  // En "Hoy", verificar que los 375 kcal persisten desde IndexedDB
+  // En "Hoy", verificar que los 555 kcal persisten desde IndexedDB
   const reloadedKcal = await page.locator('#day-total-kcal').textContent();
-  assert.match(reloadedKcal, /375/);
+  assert.match(reloadedKcal, /555/);
   console.log('[PASS 7/10] Persistencia 100% íntegra en IndexedDB verificada tras recarga');
 
   console.log('[E2E 8/10] Verificando protección contra recargas con datos sin guardar...');
@@ -178,11 +205,13 @@ try {
   await page.click('#btn-close-quick-add');
   console.log('[PASS 8/10] Detección de diálogo activo y cierre seguro verificado');
 
-  console.log('[E2E 9/10] Eliminación de ingrediente y actualización reactiva...');
-  page.once('dialog', async dialog => {
+  console.log('[E2E 9/10] Eliminación de ingredientes y actualización reactiva...');
+  page.on('dialog', async dialog => {
     await dialog.accept();
   });
-  await page.click('[data-delete-entry]');
+  await page.locator('[data-delete-entry]').first().click();
+  await page.waitForFunction(() => document.querySelector('#day-total-kcal')?.textContent?.includes('180') || document.querySelector('#day-total-kcal')?.textContent?.includes('375'));
+  await page.locator('[data-delete-entry]').first().click();
   await page.waitForFunction(() => document.querySelector('#day-total-kcal')?.textContent === '0');
   console.log('[PASS 9/10] Flujo de eliminación e interacción nativa completado');
 

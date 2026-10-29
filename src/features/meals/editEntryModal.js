@@ -3,7 +3,7 @@
  */
 import { getState, refreshState, beginAsyncOperation, endAsyncOperation } from '../../app/state.js';
 import { fmt } from '../../utils/formatting.js';
-import { computeNutrition } from '../../utils/nutrition.js';
+import { computeNutrition, convertTotalToPer100 } from '../../utils/nutrition.js';
 import { saveEntry } from '../../services/database/entriesRepo.js';
 import { openModal, closeModal } from '../../components/Modal.js';
 import { toast } from '../../components/Toast.js';
@@ -39,7 +39,14 @@ export function openEditEntry(id) {
   if (unitEl) unitEl.value = e.unit;
 
   const isPortion = e.baseType === 'portion';
-  if (isPortion) {
+  const isTotal = e.baseType === 'total_consumed';
+
+  if (isTotal) {
+    if (kcalLabel && kcalLabel.firstChild) kcalLabel.firstChild.textContent = 'Calorías totales consumidas';
+    if (protLabel && protLabel.firstChild) protLabel.firstChild.textContent = 'Proteínas totales (opcional)';
+    if (densityKcal) densityKcal.value = e.totalKcal ?? e.kcal ?? '';
+    if (densityProt) densityProt.value = e.totalProtein ?? (e.protein !== null && e.protein !== undefined ? e.protein : '');
+  } else if (isPortion) {
     if (kcalLabel && kcalLabel.firstChild) kcalLabel.firstChild.textContent = `Calorías por ${e.unit}`;
     if (protLabel && protLabel.firstChild) protLabel.firstChild.textContent = `Proteínas por ${e.unit} (opcional)`;
     if (densityKcal) densityKcal.value = e.kcalPerPortion ?? '';
@@ -65,6 +72,7 @@ function updateEditEntryPreview() {
   const { entries } = getState();
   const e = entries.find(x => x.id === editingEntryId);
   const isPortion = e?.baseType === 'portion';
+  const isTotal = e?.baseType === 'total_consumed';
   const amount = Number($('#edit-entry-amount')?.value) || 0;
   const kcalDensity = Number($('#edit-entry-density-kcal')?.value) || 0;
   const protRaw = $('#edit-entry-density-protein')?.value.trim() || '';
@@ -72,11 +80,13 @@ function updateEditEntryPreview() {
 
   const computed = computeNutrition({
     amount,
-    baseType: isPortion ? 'portion' : 'weight_volume',
-    kcalPer100: !isPortion ? kcalDensity : null,
-    proteinPer100: !isPortion ? protDensity : null,
+    baseType: isTotal ? 'total_consumed' : (isPortion ? 'portion' : 'weight_volume'),
+    kcalPer100: (!isPortion && !isTotal) ? kcalDensity : null,
+    proteinPer100: (!isPortion && !isTotal) ? protDensity : null,
     kcalPerPortion: isPortion ? kcalDensity : null,
-    proteinPerPortion: isPortion ? protDensity : null
+    proteinPerPortion: isPortion ? protDensity : null,
+    totalKcal: isTotal ? kcalDensity : null,
+    totalProtein: isTotal ? protDensity : null
   });
 
   const prevKcal = $('#edit-preview-kcal');
@@ -107,18 +117,38 @@ async function handleSaveEditEntry(event) {
   isSaving = true;
   beginAsyncOperation('edit-entry');
   const isPortion = e.baseType === 'portion';
-  let protDensity = null;
+  const isTotal = e.baseType === 'total_consumed';
+  let protVal = null;
   if (protRaw !== '' && Number.isFinite(Number(protRaw)) && Number(protRaw) >= 0) {
-    protDensity = Number(protRaw);
+    protVal = Number(protRaw);
+  }
+
+  let kcalPer100 = null, proteinPer100 = null, kcalPerPortion = null, proteinPerPortion = null;
+  let totalKcal = null, totalProtein = null;
+
+  if (isTotal) {
+    totalKcal = kcalDensity;
+    totalProtein = protVal;
+    const equiv = convertTotalToPer100(totalKcal, totalProtein, amount);
+    kcalPer100 = equiv.kcalPer100;
+    proteinPer100 = equiv.proteinPer100;
+  } else if (isPortion) {
+    kcalPerPortion = kcalDensity;
+    proteinPerPortion = protVal;
+  } else {
+    kcalPer100 = kcalDensity;
+    proteinPer100 = protVal;
   }
 
   const computed = computeNutrition({
     amount,
-    baseType: isPortion ? 'portion' : 'weight_volume',
-    kcalPer100: !isPortion ? kcalDensity : null,
-    proteinPer100: !isPortion ? protDensity : null,
-    kcalPerPortion: isPortion ? kcalDensity : null,
-    proteinPerPortion: isPortion ? protDensity : null
+    baseType: e.baseType || 'weight_volume',
+    kcalPer100,
+    proteinPer100,
+    kcalPerPortion,
+    proteinPerPortion,
+    totalKcal,
+    totalProtein
   });
 
   const updated = {
@@ -128,10 +158,12 @@ async function handleSaveEditEntry(event) {
     brand,
     amount,
     unit,
-    kcalPer100: !isPortion ? kcalDensity : null,
-    proteinPer100: !isPortion ? protDensity : null,
-    kcalPerPortion: isPortion ? kcalDensity : null,
-    proteinPerPortion: isPortion ? protDensity : null,
+    kcalPer100,
+    proteinPer100,
+    kcalPerPortion,
+    proteinPerPortion,
+    totalKcal,
+    totalProtein,
     kcal: computed.kcal,
     protein: computed.protein
   };

@@ -41,7 +41,9 @@ export function validateAndMigrateImport(json) {
       kcalPer100: e.kcalPer100 ?? null,
       proteinPer100: e.proteinPer100 ?? null,
       kcalPerPortion: e.kcalPerPortion ?? null,
-      proteinPerPortion: e.proteinPerPortion ?? null
+      proteinPerPortion: e.proteinPerPortion ?? null,
+      totalKcal: e.totalKcal ?? null,
+      totalProtein: e.totalProtein ?? null
     });
 
     migratedEntries.push({
@@ -58,6 +60,8 @@ export function validateAndMigrateImport(json) {
       proteinPer100: e.proteinPer100 ?? null,
       kcalPerPortion: e.kcalPerPortion ?? null,
       proteinPerPortion: e.proteinPerPortion ?? null,
+      totalKcal: e.totalKcal ?? (baseType === 'total_consumed' ? (e.kcal ?? null) : null),
+      totalProtein: e.totalProtein ?? (baseType === 'total_consumed' ? (e.protein ?? null) : null),
       kcal: (Number.isFinite(e.kcal)) ? e.kcal : computed.kcal,
       protein: (e.protein !== undefined && e.protein !== null) ? e.protein : computed.protein,
       createdAt: e.createdAt || new Date().toISOString()

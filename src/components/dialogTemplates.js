@@ -148,14 +148,18 @@ export const DIALOGS_HTML = `<dialog id="weight-dialog" class="entry-dialog" ari
         <input id="manual-brand" type="text" maxlength="80" placeholder="Ej.: La Calera" autocomplete="off" />
       </label>
 
-      <div class="base-type-toggle">
+      <div class="base-type-toggle tri-toggle">
         <label class="radio-pill">
           <input type="radio" name="manual-base-type" value="weight_volume" checked />
           <span>Por 100 g / ml</span>
         </label>
         <label class="radio-pill">
           <input type="radio" name="manual-base-type" value="portion" />
-          <span>Por porción / unidad</span>
+          <span>Por porción</span>
+        </label>
+        <label class="radio-pill">
+          <input type="radio" name="manual-base-type" value="total_consumed" />
+          <span>Valores totales</span>
         </label>
       </div>
 
@@ -212,6 +216,36 @@ export const DIALOGS_HTML = `<dialog id="weight-dialog" class="entry-dialog" ari
           Peso de 1 porción en gramos (opcional)
           <input id="manual-p-grams" type="number" min="0.1" max="5000" step="any" inputmode="decimal" placeholder="Ej.: 30" />
         </label>
+      </div>
+
+      <!-- CAMPOS PARA VALORES TOTALES CONSUMIDOS -->
+      <div id="manual-total-fields" hidden>
+        <div class="form-grid">
+          <label class="form-label">
+            Cantidad consumida *
+            <input id="manual-t-amount" type="number" min="0.01" max="100000" step="any" inputmode="decimal" placeholder="Ej.: 600" />
+          </label>
+          <label class="form-label">
+            Unidad *
+            <select id="manual-t-unit">
+              <option value="g">gramos (g)</option>
+              <option value="ml">mililitros (ml)</option>
+            </select>
+          </label>
+        </div>
+        <div class="form-grid">
+          <label class="form-label">
+            Calorías totales consumidas *
+            <input id="manual-t-kcal" type="number" min="0" max="20000" step="any" inputmode="decimal" placeholder="Ej.: 180" />
+          </label>
+          <label class="form-label">
+            Proteínas totales (opcional)
+            <input id="manual-t-protein" type="number" min="0" max="1000" step="any" inputmode="decimal" placeholder="Ej.: 0" />
+          </label>
+        </div>
+        <div class="total-equivalence-hint" id="manual-t-equiv-hint" style="font-size:11.5px;color:var(--sub);margin:-6px 0 14px 2px;" hidden>
+          Equivalencia: <span id="manual-t-equiv-text">—</span>
+        </div>
       </div>
 
       <div class="nutrition-preview-card">
