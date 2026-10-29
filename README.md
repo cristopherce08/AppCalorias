@@ -29,4 +29,4 @@ Aplicación web progresiva gratuita, privada y 100% local, sin backend, sin cuen
 
 ## Dónde se almacenan los datos
 
-Se almacenan exclusivamente en el **IndexedDB** de la PWA en tu iPhone. No se transmite ningún dato a servidores externos. Para proteger tu información ante limpiezas de almacenamiento de iOS, exporta periódicamente una copia desde **Ajustes → Exportar copia JSON completa** y guárdala en la app **Archivos** o en **iCloud Drive**.
+Se almacenan exclusivamente en el **IndexedDB** de la PWA en tu iPhone. No se transmite ningún dato a servidores externos. Para proteger tu información ante limpiezas de almacenamiento de iOS, exporta periódicamente una copia desde **Ajustes → Exportar copia de seguridad** y guárdala en la app **Archivos** o en **iCloud Drive**.

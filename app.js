@@ -89,6 +89,7 @@ let editingFoodId = null;
 let editingWeightId = null;
 let activeScenario = 'maintain'; // 'maintain' | 'loss' | 'gain'
 let isSaving = false;
+let isExporting = false;
 
 // -------------------------------------------------------------
 // 1. BASE DE DATOS LOCAL (IndexedDB con migración a v3)
@@ -1931,34 +1932,99 @@ function getExportData() {
   };
 }
 
-async function exportData() {
-  try {
-    const blob = new Blob([JSON.stringify(getExportData(), null, 2)], { type: 'application/json' });
-    const name = `micalorias-respaldo-${todayISO()}.json`;
-    const file = new File([blob], name, { type: 'application/json' });
+function getBackupFilename(now = new Date()) {
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  return `MiCalorias_Respaldo_${y}-${m}-${d}_${hh}-${mm}.json`;
+}
 
-    if (navigator.canShare?.({ files: [file] })) {
+async function exportData(event) {
+  if (event) {
+    if (typeof event.preventDefault === 'function') event.preventDefault();
+    if (typeof event.stopPropagation === 'function') event.stopPropagation();
+  }
+
+  // Prevenir pulsaciones rápidas y ejecuciones simultáneas
+  if (isExporting) return;
+  isExporting = true;
+
+  const exportBtn = $('#btn-export');
+  const originalText = exportBtn ? exportBtn.textContent : '';
+
+  try {
+    if (exportBtn) {
+      exportBtn.disabled = true;
+      exportBtn.setAttribute('aria-busy', 'true');
+      exportBtn.textContent = 'Preparando respaldo...';
+    }
+
+    const payload = getExportData();
+    const jsonString = JSON.stringify(payload, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const filename = getBackupFilename();
+
+    // Detección de entorno iOS en modo PWA instalada (standalone)
+    const isIOSStandalone = (
+      (typeof window !== 'undefined' && window.navigator && window.navigator.standalone === true) ||
+      (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(display-mode: standalone)').matches && /iphone|ipad|ipod/i.test(navigator.userAgent || ''))
+    );
+
+    // En iOS PWA standalone, WebKit carece de gestor de descargas estándar; se recurre a Web Share API.
+    // Esta rama es estrictamente terminal: jamás continúa al fallback de ancla para imposibilitar la doble descarga.
+    if (isIOSStandalone && typeof navigator.share === 'function') {
       try {
-        await navigator.share({ files: [file], title: 'Respaldo de MiCalorías' });
-        toast('Elige dónde guardar tu respaldo');
-        return;
+        const file = new File([blob], filename, { type: 'application/json' });
+        if (navigator.canShare?.({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: 'Respaldo de MiCalorías'
+          });
+          toast('Respaldo listo para guardar en Archivos');
+          return;
+        }
       } catch (err) {
-        if (err.name === 'AbortError') return;
+        if (err.name === 'AbortError' || err.name === 'NotAllowedError') {
+          return;
+        }
+        console.warn('No se pudo compartir archivo en PWA standalone:', err);
+        toast('No se pudo compartir el archivo de respaldo');
+        return;
       }
     }
 
+    // Para Safari iOS estándar, macOS, Chrome, Firefox y resto de navegadores:
+    // Se ejecuta una única descarga determinista mediante un ancla temporal aislada
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = name;
-    document.body.append(a);
+    a.download = filename;
+    a.rel = 'noopener';
+    a.style.display = 'none';
+    document.body.appendChild(a);
     a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 5000);
-    toast('Respaldo descargado');
+    document.body.removeChild(a);
+
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+    }, 1500);
+
+    toast('Copia de seguridad descargada');
   } catch (err) {
-    console.error(err);
+    console.error('Error al exportar datos:', err);
     toast('No se pudo exportar el respaldo');
+  } finally {
+    // Restaurar estado del botón con ventana de seguridad (600ms) contra rebotes táctiles
+    setTimeout(() => {
+      if (exportBtn) {
+        exportBtn.disabled = false;
+        exportBtn.removeAttribute('aria-busy');
+        exportBtn.textContent = originalText;
+      }
+      isExporting = false;
+    }, 600);
   }
 }
 
