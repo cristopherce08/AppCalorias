@@ -58,7 +58,7 @@ assert.strictEqual(weightStats.totalDiff, -1.5);
 // 5. Validation & Backup
 const payload = buildBackupPayload({ entries: [], foods: [], settings: [], weightEntries: [] });
 assert.strictEqual(payload.schemaVersion, 3);
-assert.strictEqual(payload.app, 'MiCalorías');
+assert.strictEqual(payload.app, 'Kalora');
 const migrated = validateAndMigrateImport(payload);
 assert.strictEqual(Array.isArray(migrated.entries), true);
 

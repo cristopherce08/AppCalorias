@@ -8,7 +8,7 @@ console.log('--- Probando validación y migración de respaldos ---');
 
 // 1. Generación de nombre de archivo
 const filename = getBackupFilename(new Date('2026-10-29T10:30:00'));
-assert.equal(filename, 'MiCalorias_Respaldo_2026-10-29_10-30.json');
+assert.equal(filename, 'Kalora_Respaldo_2026-10-29_10-30.json');
 console.log('[PASS] Nombre de respaldo determinista');
 
 // 2. Construcción de payload
@@ -19,7 +19,7 @@ const mockState = {
   settings: { goal: 2000, proteinGoal: 140 }
 };
 const payload = buildBackupPayload(mockState);
-assert.equal(payload.app, 'MiCalorías');
+assert.equal(payload.app, 'Kalora');
 assert.equal(payload.schemaVersion, 3);
 assert.equal(payload.entries.length, 1);
 assert.equal(payload.foods.length, 1);

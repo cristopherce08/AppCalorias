@@ -13,8 +13,8 @@ export const VALID_MEALS = ['desayuno', 'almuerzo', 'cena', 'snack'];
  * @returns {{ entries: Array, foods: Array, weightEntries: Array, settings: Array }}
  */
 export function validateAndMigrateImport(json) {
-  if (!json || json.app !== 'MiCalorías' || ![1, 2, 3].includes(json.schemaVersion) || !Array.isArray(json.entries) || !Array.isArray(json.foods) || !Array.isArray(json.settings)) {
-    throw new Error('El archivo no es un respaldo compatible de MiCalorías');
+  if (!json || (!['MiCalorías', 'Kalora'].includes(json.app)) || ![1, 2, 3].includes(json.schemaVersion) || !Array.isArray(json.entries) || !Array.isArray(json.foods) || !Array.isArray(json.settings)) {
+    throw new Error('El archivo no es un respaldo compatible de Kalora');
   }
 
   if (json.entries.length > 200000 || json.foods.length > 20000 || json.settings.length > 100) {
@@ -131,7 +131,7 @@ export function getBackupFilename(now = new Date()) {
   const d = String(now.getDate()).padStart(2, '0');
   const hh = String(now.getHours()).padStart(2, '0');
   const mm = String(now.getMinutes()).padStart(2, '0');
-  return `MiCalorias_Respaldo_${y}-${m}-${d}_${hh}-${mm}.json`;
+  return `Kalora_Respaldo_${y}-${m}-${d}_${hh}-${mm}.json`;
 }
 
 /**
@@ -143,7 +143,7 @@ export function buildBackupPayload({ entries = [], foods = [], settings = {}, we
     : Object.entries(settings || {}).map(([key, value]) => ({ key, value }));
 
   return {
-    app: 'MiCalorías',
+    app: 'Kalora',
     schemaVersion: 3,
     exportedAt: new Date().toISOString(),
     entries,

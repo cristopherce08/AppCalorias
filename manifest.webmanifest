@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "MiCalorías — Diario de alimentación",
-  "short_name": "MiCalorías",
-  "description": "Registro privado de calorías por ingrediente, sin conexión ni base de datos externa",
+  "name": "Kalora — Diario, Peso y Calculadora",
+  "short_name": "Kalora",
+  "description": "Registro privado de calorías, proteínas, peso y gasto metabólico, 100% local",
   "lang": "es",
   "start_url": "./",
   "scope": "./",

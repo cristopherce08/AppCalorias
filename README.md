@@ -1,4 +1,4 @@
-# MiCalorías 4.0 — PWA local para iPhone (Calorías, Proteínas, Peso & Calculadora)
+# Kalora 4.0 — PWA local para iPhone (Calorías, Proteínas, Peso & Calculadora)
 
 Aplicación web progresiva gratuita, privada y local, sin backend, sin cuentas de usuario, sin notificaciones y sin servicios externos. Todos los datos y registros se guardan en **IndexedDB** en el iPhone que la abre y funciona sin conexión mediante **Service Worker**.
 
@@ -36,7 +36,7 @@ Aplicación web progresiva gratuita, privada y local, sin backend, sin cuentas d
 2. Espera a que cargue por completo para registrar el Service Worker y guardar los archivos en caché.
 3. Pulsa el botón **Compartir** de Safari (icono del cuadrado con flecha hacia arriba).
 4. Selecciona **«Añadir a pantalla de inicio»** → pulsa **«Añadir»**.
-5. Abre **MiCalorías** desde el icono en tu pantalla de inicio.
+5. Abre **Kalora** desde el icono en tu pantalla de inicio.
 6. Funciona completamente sin conexión (puedes activar el Modo Avión para verificarlo).
 
 ## Dónde se almacenan los datos

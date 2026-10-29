@@ -66,7 +66,7 @@ try {
   await page.waitForLoadState('networkidle');
 
   const title = await page.title();
-  assert.match(title, /MiCalorías 4\.0/);
+  assert.match(title, /Kalora 4\.0/);
   console.log('[PASS 1/10] Título y cascarón cargados con versión 4.0');
 
   console.log('[E2E 2/10] Verificando navegación entre pantallas...');
