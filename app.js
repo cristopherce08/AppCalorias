@@ -2470,7 +2470,33 @@ function attachEvents() {
 }
 
 // -------------------------------------------------------------
-// 16. GESTIÓN INTELIGENTE DE ACTUALIZACIONES PWA (iOS Safari & SW)
+// 16. EXPERIENCIA TÁCTIL NATIVA Y CONTROL DE ESCALA (iOS PWA)
+// -------------------------------------------------------------
+function isStandalonePWA() {
+  return (
+    (typeof window !== 'undefined' && window.navigator && window.navigator.standalone === true) ||
+    (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
+  );
+}
+
+// Prevenir zoom gestual accidental (pinch-to-zoom) exclusivamente dentro de la PWA instalada en iOS
+// Mantiene el zoom de accesibilidad nativo cuando la aplicación se abre en Safari estándar
+if (typeof document !== 'undefined') {
+  document.addEventListener('gesturestart', event => {
+    if (isStandalonePWA()) {
+      event.preventDefault();
+    }
+  }, { passive: false });
+
+  document.addEventListener('gesturechange', event => {
+    if (isStandalonePWA()) {
+      event.preventDefault();
+    }
+  }, { passive: false });
+}
+
+// -------------------------------------------------------------
+// 17. GESTIÓN INTELIGENTE DE ACTUALIZACIONES PWA (iOS Safari & SW)
 // -------------------------------------------------------------
 let swRegistration = null;
 let waitingWorker = null;
