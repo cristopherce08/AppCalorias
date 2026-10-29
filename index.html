@@ -20,7 +20,9 @@
   <!-- AVISO DISCRETO DE ACTUALIZACIÓN DISPONIBLE -->
   <aside id="update-banner" class="update-banner" hidden role="status" aria-live="polite">
     <div class="update-banner-info">
-      <span class="update-banner-icon" aria-hidden="true">✨</span>
+      <span class="update-banner-icon" aria-hidden="true">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+      </span>
       <span class="update-banner-text">Nueva versión disponible</span>
     </div>
     <button type="button" id="btn-apply-update" class="update-banner-btn">Actualizar</button>
@@ -45,7 +47,9 @@
         <!-- AVISO DE CAMBIO EN ESTIMACIÓN DE MANTENIMIENTO -->
         <div id="calc-update-banner" class="banner-alert" hidden>
           <div class="banner-content">
-            <span class="banner-icon" aria-hidden="true">💡</span>
+            <span class="banner-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-7 7c0 2.5 1.5 4.5 3 6h8c1.5-1.5 3-3.5 3-6a7 7 0 0 0-7-7z"/></svg>
+            </span>
             <div>
               <strong>Tu estimación de mantenimiento ha cambiado</strong>
               <p id="calc-update-banner-text">Se actualizó según tu nuevo peso. ¿Deseas revisar tu objetivo diario?</p>
@@ -72,7 +76,11 @@
           <div class="total-metric metric-kcal">
             <div class="metric-head">
               <span class="metric-label">CALORÍAS</span>
-              <span class="metric-icon" aria-hidden="true">🔥</span>
+              <span class="metric-icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+                </svg>
+              </span>
             </div>
             <div class="metric-values">
               <span id="day-total-kcal" class="metric-main">0</span>
@@ -92,7 +100,17 @@
           <div class="total-metric metric-protein">
             <div class="metric-head">
               <span class="metric-label">PROTEÍNAS</span>
-              <span class="metric-icon" aria-hidden="true">💪</span>
+              <span class="metric-icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m6.5 6.5 11 11"/>
+                  <path d="m21 21-1-1"/>
+                  <path d="m3 3 1 1"/>
+                  <path d="m18 22 4-4"/>
+                  <path d="m2 6 4-4"/>
+                  <path d="m3 10 7-7"/>
+                  <path d="m14 21 7-7"/>
+                </svg>
+              </span>
             </div>
             <div class="metric-values">
               <span id="day-total-protein" class="metric-main">0</span>
@@ -110,14 +128,15 @@
 
         <!-- CUANDO NO EXISTE OBJETIVO: REFERENCIA INFORMATIVA DE MANTENIMIENTO -->
         <div id="maint-ref-wrapper" class="maint-ref-card" hidden>
-          <div class="maint-ref-content">
+          <div class="maint-ref-left">
             <span class="maint-tag">Referencia</span>
-            <span id="maint-ref-text" class="maint-text">Mantenimiento: ~2,300 kcal/día</span>
+            <span class="maint-label">Mantenimiento</span>
           </div>
+          <div id="maint-ref-text" class="maint-value">~2,300 kcal/día</div>
         </div>
 
         <div id="protein-partial-note" class="partial-note" hidden>
-          ⚠️ <em>Total de proteínas parcial:</em> hay ingredientes sin proteínas registradas. Toca ✎ para completarlos.
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right:4px;" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><em>Total de proteínas parcial:</em> hay ingredientes sin proteínas registradas. Toca ✎ para completarlos.
         </div>
 
         <div id="meals-container" class="meals-container"></div>
@@ -283,7 +302,9 @@
           </select>
           <p class="muted" style="margin-top:6px;font-size:11.5px">Los factores son multiplicadores aproximados basados en promedios poblacionales, no mediciones de calorimetría directa.</p>
 
-          <button type="button" id="btn-run-calculation" class="primary-button wide-button" style="margin-top:10px">🧮 Calcular gasto energético</button>
+          <button type="button" id="btn-run-calculation" class="primary-button wide-button" style="margin-top:10px">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px; margin-right:6px;" aria-hidden="true"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>Calcular gasto energético
+          </button>
         </div>
 
         <!-- TARJETA DE RESULTADOS DE LA CALCULADORA -->
@@ -314,7 +335,7 @@
           </div>
 
           <div class="disclaimer-note">
-            ⚠️ <strong>Aviso orientativo:</strong> Este resultado es una estimación matemática teórica y puede diferir de tu gasto metabólico real. No constituye una prescripción médica ni nutricional obligatoria.
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right:4px;" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><strong>Aviso orientativo:</strong> Este resultado es una estimación matemática teórica y puede diferir de tu gasto metabólico real. No constituye una prescripción médica ni nutricional obligatoria.
           </div>
 
           <!-- ESCENARIOS ORIENTATIVOS SEGÚN INTENCIÓN -->
@@ -385,7 +406,9 @@
         <!-- ACCESOS RÁPIDOS DENTRO DE AJUSTES -->
         <div class="settings-nav-cards">
           <button type="button" class="settings-nav-card" id="btn-goto-calc">
-            <span class="s-icon">🧮</span>
+            <span class="s-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>
+            </span>
             <div>
               <strong>Calculadora de gasto calórico</strong>
               <span>Estimar RMR y mantenimiento con Mifflin-St Jeor</span>
@@ -393,7 +416,9 @@
             <span class="s-arrow">›</span>
           </button>
           <button type="button" class="settings-nav-card" id="btn-goto-peso">
-            <span class="s-icon">⚖️</span>
+            <span class="s-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
+            </span>
             <div>
               <strong>Seguimiento de peso corporal</strong>
               <span>Historial, gráfica de evolución y tendencias</span>
@@ -401,7 +426,9 @@
             <span class="s-arrow">›</span>
           </button>
           <button type="button" class="settings-nav-card" id="btn-goto-historial">
-            <span class="s-icon">📋</span>
+            <span class="s-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
+            </span>
             <div>
               <strong>Historial de comidas</strong>
               <span>Registro de días pasados y alimentos</span>
@@ -505,7 +532,7 @@
       </label>
 
       <div class="weight-tip-box">
-        💡 Se recomienda pesarse a la misma hora y bajo condiciones similares para evitar variaciones por retención de líquidos.
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right:4px;" aria-hidden="true"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-7 7c0 2.5 1.5 4.5 3 6h8c1.5-1.5 3-3.5 3-6a7 7 0 0 0-7-7z"/></svg>Se recomienda pesarse a la misma hora y bajo condiciones similares para evitar variaciones por retención de líquidos.
       </div>
 
       <button type="submit" id="btn-save-weight" class="primary-button wide-button">Guardar peso</button>
@@ -555,10 +582,10 @@
 
     <!-- SELECTOR DE COMIDA -->
     <div class="meal-picker-bar" role="radiogroup" aria-label="Selecciona la comida">
-      <button type="button" class="meal-chip active" data-meal-choice="desayuno">☀️ Desayuno</button>
-      <button type="button" class="meal-chip" data-meal-choice="almuerzo">🍽️ Almuerzo</button>
-      <button type="button" class="meal-chip" data-meal-choice="cena">🌙 Cena</button>
-      <button type="button" class="meal-chip" data-meal-choice="snack">🍎 Snack</button>
+      <button type="button" class="meal-chip active" data-meal-choice="desayuno">Desayuno</button>
+      <button type="button" class="meal-chip" data-meal-choice="almuerzo">Almuerzo</button>
+      <button type="button" class="meal-chip" data-meal-choice="cena">Cena</button>
+      <button type="button" class="meal-chip" data-meal-choice="snack">Snack</button>
     </div>
 
     <!-- TABS DE MODO: DE BIBLIOTECA vs INGRESO MANUAL -->
@@ -919,10 +946,10 @@
       <label class="form-label">
         Comida
         <select id="u-meal-select" required>
-          <option value="desayuno">☀️ Desayuno</option>
-          <option value="almuerzo">🍽️ Almuerzo</option>
-          <option value="cena">🌙 Cena</option>
-          <option value="snack">🍎 Snack</option>
+          <option value="desayuno">Desayuno</option>
+          <option value="almuerzo">Almuerzo</option>
+          <option value="cena">Cena</option>
+          <option value="snack">Snack</option>
         </select>
       </label>
 

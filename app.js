@@ -12,6 +12,13 @@ const MEALS = [
   { id: 'snack', title: 'Snacks', emoji: '🍎' }
 ];
 
+const MEAL_ICONS = {
+  desayuno: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>',
+  almuerzo: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 2v6a3 3 0 0 1-3 3 3 3 0 0 1-3-3V2"/><path d="M15 2v18"/><path d="M6 2v20"/><path d="M6 7h4a2 2 0 0 0 2-2V2"/></svg>',
+  cena: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>',
+  snack: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z"/><path d="M10 2c1 .5 2 2 2 5"/></svg>'
+};
+
 const $ = selector => document.querySelector(selector);
 const numberFormat = new Intl.NumberFormat('es-PE', { maximumFractionDigits: 1 });
 
@@ -406,9 +413,9 @@ function renderDiary() {
     if (calcResult && (calcResult.tdee || calcResult.tdeeMin)) {
       maintWrap.hidden = false;
       if (calcResult.isRange) {
-        $('#maint-ref-text').textContent = `Mantenimiento estimado: ~${fmt(calcResult.tdeeMin)}–${fmt(calcResult.tdeeMax)} kcal/día`;
+        $('#maint-ref-text').textContent = `~${fmt(calcResult.tdeeMin)}–${fmt(calcResult.tdeeMax)} kcal/día`;
       } else {
-        $('#maint-ref-text').textContent = `Mantenimiento estimado: ~${fmt(calcResult.tdee)} kcal/día`;
+        $('#maint-ref-text').textContent = `~${fmt(calcResult.tdee)} kcal/día`;
       }
     } else {
       maintWrap.hidden = true;
@@ -494,7 +501,7 @@ function renderDiary() {
       <article class="meal-card">
         <div class="meal-top">
           <div class="meal-title-area">
-            <div class="meal-emoji" aria-hidden="true">${meal.emoji}</div>
+            <div class="meal-emoji" aria-hidden="true">${MEAL_ICONS[meal.id] || ''}</div>
             <div>
               <div class="meal-name">${meal.title}</div>
               <div class="meal-count">${list.length} ingrediente${list.length === 1 ? '' : 's'}</div>

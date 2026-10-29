@@ -244,7 +244,18 @@ h1 {
   text-transform: uppercase;
 }
 .metric-icon {
-  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  opacity: 0.95;
+  color: #fff;
+}
+.metric-icon svg {
+  width: 18px;
+  height: 18px;
+  display: block;
 }
 .metric-values {
   display: flex;
@@ -342,8 +353,13 @@ h1 {
   height: 40px;
   border-radius: 13px;
   background: #f5f2ff;
-  font-size: 20px;
+  color: var(--purple-dark);
   flex-shrink: 0;
+}
+.meal-emoji svg {
+  width: 20px;
+  height: 20px;
+  display: block;
 }
 .meal-name {
   font-weight: 750;
@@ -1345,43 +1361,50 @@ h1 {
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 14px;
-  padding: 10px 14px;
-  margin-top: -5px;
+  padding: 11px 14px;
+  margin-top: -6px;
   margin-bottom: 16px;
   box-shadow: var(--shadow-sm);
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-between;
   gap: 10px;
+  box-sizing: border-box;
+  flex-wrap: wrap;
 }
 .maint-ref-card[hidden], .maint-ref-box[hidden] {
   display: none !important;
 }
-.maint-ref-content {
+.maint-ref-left {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-width: 0;
-  flex: 1;
+  flex-shrink: 0;
 }
 .maint-tag {
   background: var(--purple-soft);
   color: var(--purple-dark);
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 800;
-  padding: 3px 8px;
-  border-radius: 6px;
+  padding: 3px 7px;
+  border-radius: 5px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   flex-shrink: 0;
 }
-.maint-text {
+.maint-label {
   font-size: 12.5px;
-  font-weight: 650;
+  font-weight: 600;
+  color: var(--sub);
+}
+.maint-value, .maint-text {
+  font-size: 13.5px;
+  font-weight: 750;
   color: var(--ink);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: normal;
+  overflow: visible;
+  text-align: right;
 }
 
 /* SECCIÓN MI PESO */
@@ -1766,8 +1789,20 @@ h1 {
   background: #f8f9fc;
 }
 .s-icon {
-  font-size: 24px;
-  line-height: 1;
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  background: #f5f2ff;
+  color: var(--purple-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.s-icon svg {
+  width: 20px;
+  height: 20px;
+  display: block;
 }
 .settings-nav-card strong {
   display: block;
