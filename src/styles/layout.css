@@ -1,0 +1,153 @@
+/**
+ * layout.css — Disposición estructural de la aplicación, contenedor principal y navegación
+ */
+.app-shell {
+  max-width: 640px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 0 18px calc(115px + env(safe-area-inset-bottom));
+  overflow-x: hidden;
+  width: 100%;
+}
+
+/* HEADER */
+.app-header {
+  height: 84px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.brand {
+  display: flex;
+  gap: 11px;
+  align-items: center;
+}
+.brand-icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  color: #fff;
+  background: linear-gradient(145deg, #7c6cf4, #4a3ec6);
+  font-size: 26px;
+  font-weight: 800;
+  box-shadow: 0 8px 18px rgba(99, 82, 216, 0.28);
+}
+.brand strong {
+  display: block;
+  font-size: 17px;
+  letter-spacing: -0.4px;
+}
+.brand span {
+  display: block;
+  font-size: 11.5px;
+  color: var(--sub);
+}
+
+/* TITULARES Y CABECERAS DE SECCIÓN */
+.section-lead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin: 14px 0 18px;
+  gap: 10px;
+}
+.eyebrow {
+  font-size: 10.5px;
+  letter-spacing: 1.6px;
+  font-weight: 800;
+  color: #7b6ee0;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+h1 {
+  font-size: 32px;
+  line-height: 1.15;
+  letter-spacing: -1.2px;
+  margin: 0;
+  font-weight: 800;
+}
+
+/* NAVEGACIÓN INFERIOR (5 ACCESOS) */
+.bottom-nav {
+  position: fixed;
+  z-index: 20;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(100%, 640px);
+  height: calc(74px + env(safe-area-inset-bottom));
+  padding: 8px 6px calc(8px + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.98);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border-top: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  box-shadow: 0 -10px 28px rgba(27, 39, 71, 0.06);
+}
+.nav-item {
+  background: transparent;
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  font-size: 9.5px;
+  font-weight: 750;
+  color: #8f98ae;
+  border-radius: 12px;
+}
+.nav-item svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.nav-item.active {
+  color: var(--purple);
+  background: #f4f1ff;
+}
+
+/* BOTÓN CENTRAL DE AGREGAR */
+.nav-item-add {
+  color: var(--purple);
+}
+.nav-add-circle {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7868f6, #5142d3);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  line-height: 1;
+  font-weight: 800;
+  box-shadow: 0 4px 14px rgba(99, 82, 216, 0.38);
+  margin-top: -8px;
+}
+
+/* RESPONSIVE DESKTOP SHELL */
+@media (min-width: 660px) {
+  body {
+    background: #eceff6;
+  }
+  .app-shell {
+    background: var(--bg);
+    box-shadow: 0 0 50px rgba(41, 52, 85, 0.08);
+  }
+  .entry-dialog {
+    border-radius: 24px;
+    margin: auto;
+    max-width: 540px;
+  }
+  .bottom-nav {
+    border-radius: 16px 16px 0 0;
+  }
+}

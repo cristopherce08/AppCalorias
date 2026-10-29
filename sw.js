@@ -1,4 +1,4 @@
-const CACHE_NAME = 'micalorias-shell-v3.7';
+const CACHE_NAME = 'micalorias-shell-v4.0';
 const ASSETS = [
   './',
   './index.html',
@@ -7,7 +7,45 @@ const ASSETS = [
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',
-  './icons/apple-touch-icon.png'
+  './icons/apple-touch-icon.png',
+  './src/app/main.js',
+  './src/app/state.js',
+  './src/app/router.js',
+  './src/app/bootstrap.js',
+  './src/components/icons.js',
+  './src/components/Modal.js',
+  './src/components/Toast.js',
+  './src/components/dialogTemplates.js',
+  './src/features/dashboard/dashboardView.js',
+  './src/features/meals/quickAddModal.js',
+  './src/features/meals/editEntryModal.js',
+  './src/features/foods/foodsView.js',
+  './src/features/foods/foodEditorModal.js',
+  './src/features/foods/directUseModal.js',
+  './src/features/calculator/calculatorView.js',
+  './src/features/calculator/goalConfirmModal.js',
+  './src/features/weight/weightView.js',
+  './src/features/weight/weightModal.js',
+  './src/features/history/historyView.js',
+  './src/features/settings/settingsView.js',
+  './src/features/backup/backupService.js',
+  './src/services/database/db.js',
+  './src/services/database/entriesRepo.js',
+  './src/services/database/foodsRepo.js',
+  './src/services/database/settingsRepo.js',
+  './src/services/database/weightRepo.js',
+  './src/services/pwa/touch.js',
+  './src/services/pwa/serviceWorker.js',
+  './src/utils/dates.js',
+  './src/utils/formatting.js',
+  './src/utils/nutrition.js',
+  './src/utils/energy.js',
+  './src/utils/validation.js',
+  './src/styles/tokens.css',
+  './src/styles/base.css',
+  './src/styles/layout.css',
+  './src/styles/components.css',
+  './src/styles/features.css'
 ];
 
 self.addEventListener('install', event => {

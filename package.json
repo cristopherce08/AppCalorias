@@ -1,0 +1,13 @@
+{
+  "name": "micalorias",
+  "version": "4.0.0",
+  "description": "Progressive Web App local para iPhone para registro de calorías, proteínas, calculadora energética y peso corporal.",
+  "type": "module",
+  "scripts": {
+    "test": "node tests/run-all.js",
+    "start": "npx serve -l 3000 ."
+  },
+  "author": "cristopherce08",
+  "license": "MIT",
+  "private": true
+}

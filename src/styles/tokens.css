@@ -1,0 +1,38 @@
+/**
+ * tokens.css — Variables de diseño del sistema, paleta de color y tokens tipográficos
+ */
+:root {
+  color-scheme: light;
+  --bg: #f7f8fc;
+  --ink: #17223b;
+  --sub: #717d96;
+  --card: #ffffff;
+  --line: #e8ecf4;
+  --line-strong: #d3dae8;
+  
+  /* Calorías (Púrpura / Índigo) */
+  --purple: #6352d8;
+  --purple-dark: #4b3bb8;
+  --purple-soft: #f0edff;
+  --purple-border: #ded8ff;
+  
+  /* Proteínas (Teal / Esmeralda) */
+  --teal: #0d9488;
+  --teal-dark: #0f766e;
+  --teal-soft: #e6fffa;
+  --teal-border: #bbf7d0;
+  
+  /* Favorito (Ámbar) */
+  --amber: #f59e0b;
+  --amber-soft: #fef3c7;
+  
+  --danger: #b13b52;
+  --danger-soft: #fff1f2;
+  
+  --shadow-sm: 0 4px 12px rgba(23, 34, 59, 0.04);
+  --shadow: 0 10px 30px rgba(27, 39, 71, 0.06);
+  --shadow-lg: 0 16px 40px rgba(27, 39, 71, 0.12);
+  
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}

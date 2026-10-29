@@ -1,0 +1,62 @@
+/**
+ * base.css — Reseteo fundamental, control de escalado y comportamiento táctil nativo
+ */
+* { box-sizing: border-box; }
+
+html {
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--bg);
+  margin: 0;
+  color: var(--ink);
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+  touch-action: manipulation;
+  width: 100%;
+  max-width: 100vw;
+  position: relative;
+}
+
+/* touch-action no se hereda; se declara explícitamente en contenedores, tarjetas y modales */
+.app-shell,
+#main-content,
+.view,
+.dual-total-card,
+.total-metric,
+.meal-card,
+.maint-ref-card,
+.settings-card,
+.settings-nav-card,
+.entry-dialog,
+.date-picker-row,
+header,
+main,
+section,
+article {
+  touch-action: manipulation;
+}
+
+button, input, select, textarea, a, label {
+  font: inherit;
+  touch-action: manipulation;
+}
+
+button {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+input, select, textarea {
+  color: var(--ink);
+  font-size: 16px; /* Mínimo 16px para evitar auto-zoom molesto en Safari iOS */
+}
+
+input:focus-visible, select:focus-visible, button:focus-visible {
+  outline: 3px solid #a69cff;
+  outline-offset: 2px;
+}

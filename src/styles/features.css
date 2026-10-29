@@ -1,0 +1,1126 @@
+/**
+ * features.css — Estilos visuales de pantallas funcionales (Diario, Alimentos, Peso, Calculadora, Historial)
+ */
+/* FECHA */
+.date-picker-row {
+  display: grid;
+  grid-template-columns: 46px 1fr 46px;
+  gap: 9px;
+  align-items: stretch;
+  margin-bottom: 16px;
+}
+.square-btn {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  font-size: 28px;
+  line-height: 1;
+  color: #615d8f;
+  display: grid;
+  place-items: center;
+  box-shadow: var(--shadow-sm);
+}
+.date-field {
+  position: relative;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  font-size: 13.5px;
+  font-weight: 750;
+  text-align: center;
+  padding: 12px 6px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.date-field input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* TARJETA DUAL TOTALES (CALORÍAS Y PROTEÍNAS) */
+.dual-total-card {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 11px;
+  margin-bottom: 16px;
+}
+.total-metric {
+  border-radius: 20px;
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 104px;
+  box-shadow: var(--shadow);
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+.metric-kcal {
+  background: linear-gradient(135deg, #6b58dc 0%, #4437a8 100%);
+}
+.metric-protein {
+  background: linear-gradient(135deg, #109b8e 0%, #0d6d64 100%);
+}
+.metric-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.metric-label {
+  font-size: 10.5px;
+  letter-spacing: 1.2px;
+  font-weight: 800;
+  opacity: 0.9;
+  text-transform: uppercase;
+}
+.metric-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  opacity: 0.95;
+  color: #fff;
+}
+.metric-icon svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+.metric-values {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.metric-main {
+  font-size: 36px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -1.5px;
+  font-variant-numeric: tabular-nums;
+}
+.metric-unit {
+  font-size: 14px;
+  font-weight: 700;
+  opacity: 0.9;
+}
+.partial-badge {
+  font-size: 20px;
+  line-height: 1;
+  color: #fef08a;
+  font-weight: 900;
+  margin-left: 2px;
+}
+.goal-wrapper {
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
+}
+.progress-bar-bg {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.progress-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.35s ease;
+}
+.fill-kcal {
+  background: #fcd34d;
+}
+.fill-protein {
+  background: #a7f3d0;
+}
+.goal-text {
+  font-size: 11px;
+  font-weight: 650;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.partial-note {
+  font-size: 11.5px;
+  line-height: 1.5;
+  background: #fffbeb;
+  color: #92400e;
+  border: 1px solid #fef3c7;
+  padding: 10px 14px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+/* COMIDAS Y TARJETAS */
+.meals-container {
+  margin: 18px 0 20px;
+}
+.meal-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 18px 17px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow);
+}
+.meal-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.meal-title-area {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+.meal-emoji {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
+  background: #f5f2ff;
+  color: var(--purple-dark);
+  flex-shrink: 0;
+}
+.meal-emoji svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+.meal-name {
+  font-weight: 750;
+  font-size: 15.5px;
+}
+.meal-count {
+  color: var(--sub);
+  font-size: 11px;
+  margin-top: 2px;
+}
+.meal-totals-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.pill-kcal {
+  background: var(--purple-soft);
+  color: var(--purple-dark);
+  padding: 5px 9px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 750;
+}
+.pill-protein {
+  background: var(--teal-soft);
+  color: var(--teal-dark);
+  padding: 5px 9px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 750;
+}
+.meal-empty {
+  padding: 16px 0 4px;
+  color: #9ba3b5;
+  font-size: 12px;
+  text-align: center;
+}
+
+.meal-items {
+  margin-top: 13px;
+  border-top: 1px solid var(--line);
+}
+.meal-item {
+  padding: 12px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid #f1f3f8;
+}
+.meal-item:last-child {
+  border-bottom: none;
+  padding-bottom: 2px;
+}
+.meal-item-name {
+  font-size: 13.5px;
+  font-weight: 750;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.meal-item-brand {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  color: #6366f1;
+  background: #eef2ff;
+  padding: 1px 6px;
+  border-radius: 6px;
+  margin-left: 5px;
+}
+.meal-item-detail {
+  color: var(--sub);
+  font-size: 11px;
+  margin-top: 3px;
+}
+.meal-item-side {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.item-nutri-badges {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+.badge-kcal {
+  font-size: 12.5px;
+  font-weight: 750;
+  color: var(--ink);
+}
+.badge-prot {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--teal-dark);
+  background: var(--teal-soft);
+  padding: 1px 6px;
+  border-radius: 6px;
+}
+.icon-action {
+  background: #f6f5fb;
+  border: 0;
+  border-radius: 8px;
+  color: #7b7599;
+  font-weight: 700;
+  font-size: 14px;
+  height: 32px;
+  width: 32px;
+  display: grid;
+  place-items: center;
+}
+.meal-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 0;
+  color: var(--purple);
+  font-size: 12.5px;
+  font-weight: 750;
+  margin-top: 13px;
+  padding: 5px 0;
+}
+
+/* FILTRO Y BUSCADOR */
+.search-field {
+  display: flex;
+  gap: 9px;
+  background: #fff;
+  border: 1px solid var(--line);
+  padding: 12px 16px;
+  border-radius: 14px;
+  align-items: center;
+  color: var(--sub);
+  margin-bottom: 14px;
+  box-shadow: var(--shadow-sm);
+}
+.search-field.compact {
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+.search-field span {
+  font-size: 20px;
+  line-height: 1;
+}
+.search-field input {
+  border: 0;
+  outline: 0;
+  flex: 1;
+  min-width: 0;
+  font-size: 16px;
+}
+.filter-chips {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.chip {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--sub);
+}
+.chip.active {
+  background: var(--purple-soft);
+  color: var(--purple);
+  border-color: var(--purple-border);
+}
+
+/* TARJETA DE ALIMENTO (MIS ALIMENTOS) */
+.food-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 17px;
+  padding: 16px;
+  margin-bottom: 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  box-shadow: var(--shadow-sm);
+}
+.food-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+.food-title-group {
+  min-width: 0;
+}
+.food-name {
+  font-weight: 780;
+  font-size: 15px;
+  line-height: 1.35;
+}
+.food-brand-tag {
+  font-size: 10px;
+  font-weight: 700;
+  color: #6366f1;
+  background: #eef2ff;
+  padding: 2px 6px;
+  border-radius: 6px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.food-nutri-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.nutri-pill-kcal {
+  font-size: 12px;
+  font-weight: 750;
+  color: var(--purple-dark);
+  background: var(--purple-soft);
+  padding: 3px 8px;
+  border-radius: 7px;
+}
+.nutri-pill-prot {
+  font-size: 12px;
+  font-weight: 750;
+  color: var(--teal-dark);
+  background: var(--teal-soft);
+  padding: 3px 8px;
+  border-radius: 7px;
+}
+.food-portion-hint {
+  font-size: 11px;
+  color: var(--sub);
+  margin-top: 4px;
+}
+.btn-fav {
+  background: transparent;
+  border: 0;
+  font-size: 22px;
+  line-height: 1;
+  color: #cbd5e1;
+  padding: 4px;
+}
+.btn-fav.active {
+  color: var(--amber);
+}
+
+.food-actions-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #f1f3f8;
+  padding-top: 10px;
+  margin-top: 2px;
+}
+.food-left-actions {
+  display: flex;
+  gap: 6px;
+}
+.btn-use-food {
+  background: var(--purple);
+  color: #fff;
+  border: 0;
+  border-radius: 9px;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 750;
+}
+.mini-action-btn {
+  background: #f6f5fb;
+  border: 0;
+  border-radius: 8px;
+  padding: 7px 9px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #555079;
+}
+.mini-action-btn.danger {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+/* HISTORIAL */
+.history-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 16px 17px;
+  margin-bottom: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+  box-shadow: var(--shadow-sm);
+}
+.history-name {
+  font-weight: 780;
+  font-size: 14.5px;
+}
+.history-meta {
+  color: var(--sub);
+  font-size: 11.5px;
+  margin-top: 3px;
+  display: block;
+}
+.history-right-stats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+.history-kcal {
+  font-weight: 800;
+  color: var(--purple-dark);
+  font-size: 13.5px;
+}
+.history-prot {
+  font-weight: 750;
+  color: var(--teal-dark);
+  font-size: 11.5px;
+}
+
+/* SETTINGS & PRIVACY */
+.settings-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 20px;
+  margin: 16px 0;
+  box-shadow: var(--shadow-sm);
+}
+.settings-card h2 {
+  font-size: 16px;
+  margin: 0 0 8px;
+}
+.muted {
+  color: var(--sub);
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 0 0 14px;
+}
+.muted-intro {
+  color: var(--sub);
+  font-size: 13px;
+  line-height: 1.6;
+  margin: -4px 0 18px;
+}
+.goal-setting-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.warning-note {
+  color: #9a7380;
+  font-size: 11px;
+  line-height: 1.5;
+  margin: 12px 0 0;
+}
+.storage-status {
+  font-size: 12px;
+  font-weight: 700;
+  color: #4d5b79;
+  margin: 0 0 14px;
+}
+.privacy-note {
+  border: 1px solid #d0ecdd;
+  border-radius: 16px;
+  padding: 18px;
+  background: #f0fbf5;
+  color: #276246;
+  font-size: 13px;
+  margin: 18px 0;
+}
+.privacy-note p {
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 6px 0 0;
+}
+.version {
+  text-align: center;
+  color: #a1a9b9;
+  font-size: 11px;
+  margin: 28px 0;
+}
+
+/* ========================================================
+   ESTILOS DE LA VERSIÓN 3.0 (PESO, CALCULADORA Y ATALJOS)
+   ======================================================== */
+
+/* BANNER DE ACTUALIZACIÓN DE ESTIMACIÓN */
+.banner-alert {
+  background: #fffbeb;
+  border: 1.5px solid #fde68a;
+  border-radius: 16px;
+  padding: 14px 15px;
+  margin-bottom: 15px;
+  box-shadow: var(--shadow-sm);
+}
+.banner-content {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.banner-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+.banner-content strong {
+  display: block;
+  font-size: 13.5px;
+  color: #92400e;
+}
+.banner-content p {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: #78350f;
+  line-height: 1.45;
+}
+.banner-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.banner-btn {
+  border: 0;
+  border-radius: 9px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 750;
+}
+.banner-btn.primary {
+  background: #d97706;
+  color: #fff;
+}
+.banner-btn.secondary {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* CAJA DE MANTENIMIENTO INFORMATIVO EN TOTAL CONSUMIDO */
+.maint-ref-card, .maint-ref-box {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 11px 14px;
+  margin-top: -6px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  box-sizing: border-box;
+  flex-wrap: wrap;
+}
+.maint-ref-card[hidden], .maint-ref-box[hidden] {
+  display: none !important;
+}
+.maint-ref-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.maint-tag {
+  background: var(--purple-soft);
+  color: var(--purple-dark);
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 7px;
+  border-radius: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+.maint-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--sub);
+}
+.maint-value, .maint-text {
+  font-size: 13.5px;
+  font-weight: 750;
+  color: var(--ink);
+  white-space: normal;
+  word-break: normal;
+  overflow: visible;
+  text-align: right;
+}
+
+/* SECCIÓN MI PESO */
+.weight-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 15px;
+}
+.weight-stat-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px 10px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+.stat-label {
+  font-size: 9.5px;
+  letter-spacing: 0.8px;
+  font-weight: 800;
+  color: var(--sub);
+  text-transform: uppercase;
+}
+.stat-value {
+  font-size: 18px;
+  font-weight: 800;
+  margin: 4px 0 2px;
+  color: var(--ink);
+}
+.stat-unit {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--sub);
+}
+.stat-sub {
+  font-size: 10.5px;
+  color: var(--sub);
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* GRÁFICA DE PESO (SVG) */
+.chart-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
+}
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  gap: 8px;
+}
+.chart-header h2 {
+  font-size: 15px;
+  margin: 0;
+}
+.chart-sub {
+  font-size: 11.5px;
+  color: var(--sub);
+}
+.chart-periods {
+  display: flex;
+  gap: 4px;
+}
+.chart-periods .chip {
+  padding: 5px 9px;
+  font-size: 11px;
+}
+.weight-chart-container {
+  width: 100%;
+  height: 200px;
+  background: #fafbfe;
+  border: 1px solid #f0f2f7;
+  border-radius: 13px;
+  position: relative;
+  overflow: hidden;
+}
+.weight-svg-chart {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.chart-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #8c95a8;
+  font-size: 12px;
+  padding: 16px;
+  text-align: center;
+}
+.chart-footer-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+/* TABLA ACCESIBLE DE PESO */
+.accessible-table-wrap {
+  margin-top: 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  text-align: left;
+}
+.data-table th, .data-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #f1f3f8;
+}
+.data-table th {
+  color: var(--sub);
+  font-weight: 750;
+}
+
+/* HISTORIAL DE PESOS */
+.history-lead-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 16px 0 10px;
+}
+.history-lead-row h2 {
+  font-size: 16px;
+  margin: 0;
+}
+.weights-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.weight-row-item {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: var(--shadow-sm);
+}
+.weight-row-left {
+  display: flex;
+  flex-direction: column;
+}
+.w-row-date {
+  font-weight: 780;
+  font-size: 13.5px;
+}
+.w-row-note {
+  font-size: 11px;
+  color: var(--sub);
+  margin-top: 2px;
+}
+.weight-row-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.w-row-val {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.w-diff-badge {
+  font-size: 11px;
+  font-weight: 750;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+.w-diff-badge.down {
+  background: #ecfdf5;
+  color: #047857;
+}
+.w-diff-badge.up {
+  background: #fff1f2;
+  color: #be123c;
+}
+.w-diff-badge.same {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+/* CALCULADORA DE CALORÍAS */
+.param-explanation {
+  font-size: 11px;
+  color: var(--sub);
+  line-height: 1.5;
+  background: #f8fafc;
+  border: 1px solid #edf2f7;
+  padding: 8px 11px;
+  border-radius: 10px;
+  margin: 6px 0 12px;
+}
+.activity-select {
+  border: 1px solid #dbe0eb;
+  border-radius: 12px;
+  padding: 12px 13px;
+  background: #fff;
+  width: 100%;
+  font-size: 16px;
+}
+.result-card {
+  border-left: 4px solid var(--teal);
+}
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+.result-date-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--sub);
+  background: #f1f3f9;
+  padding: 3px 8px;
+  border-radius: 8px;
+}
+.results-comparison-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.result-box {
+  border-radius: 14px;
+  padding: 13px 12px;
+  display: flex;
+  flex-direction: column;
+}
+.rmr-box {
+  background: #f4f2ff;
+  border: 1px solid #e5e0fa;
+}
+.tdee-box {
+  background: #e6fffa;
+  border: 1px solid #bbf7d0;
+}
+.res-box-label {
+  font-size: 9.5px;
+  letter-spacing: 0.8px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.rmr-box .res-box-label { color: #5b4dbf; }
+.tdee-box .res-box-label { color: #0d7066; }
+.res-box-val {
+  font-size: 26px;
+  font-weight: 850;
+  line-height: 1.15;
+  margin: 6px 0 4px;
+}
+.rmr-box .res-box-val { color: var(--purple-dark); }
+.tdee-box .res-box-val { color: var(--teal-dark); }
+.res-box-desc {
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: var(--sub);
+}
+.calc-meta-details {
+  font-size: 11.5px;
+  color: var(--sub);
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+.disclaimer-note {
+  font-size: 11px;
+  line-height: 1.5;
+  background: #fffbeb;
+  border: 1px solid #fef3c7;
+  color: #92400e;
+  padding: 10px 12px;
+  border-radius: 11px;
+  margin-bottom: 14px;
+}
+
+/* ESCENARIOS */
+.scenarios-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-bottom: 8px;
+}
+.scenario-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+}
+.scenario-item.active {
+  border-color: var(--teal);
+  background: #f0fdfa;
+}
+.scenario-sub {
+  display: block;
+  font-size: 11px;
+  color: var(--sub);
+}
+.scenario-kcal {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.scenarios-disclaimer {
+  font-size: 10.5px;
+  color: var(--sub);
+  line-height: 1.45;
+  margin: 6px 0 16px;
+}
+
+/* OPCIONES DECISIÓN (A vs B) */
+.options-decision-box {
+  background: #f8f9fd;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 14px;
+  margin-top: 10px;
+}
+.option-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.option-info strong {
+  display: block;
+  font-size: 13px;
+  color: var(--ink);
+}
+.option-info p {
+  margin: 3px 0 0;
+  font-size: 11.5px;
+  color: var(--sub);
+  line-height: 1.5;
+}
+.option-divider {
+  height: 1px;
+  background: var(--line);
+  margin: 14px 0;
+}
+
+/* ACCESOS NAVEGACIÓN EN AJUSTES */
+.settings-nav-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.settings-nav-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  box-shadow: var(--shadow-sm);
+  width: 100%;
+}
+.settings-nav-card:active {
+  background: #f8f9fc;
+}
+.s-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  background: #f5f2ff;
+  color: var(--purple-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.s-icon svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+.settings-nav-card strong {
+  display: block;
+  font-size: 14px;
+  color: var(--ink);
+}
+.settings-nav-card span {
+  font-size: 11.5px;
+  color: var(--sub);
+}
+.s-arrow {
+  margin-left: auto;
+  font-size: 18px;
+  color: var(--sub);
+  font-weight: 700;
+}
+
+.danger-text {
+  color: var(--danger) !important;
+  border-color: #fecdd3 !important;
+}
+
+.weight-tip-box {
+  font-size: 11.5px;
+  color: #3b82f6;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  padding: 9px 12px;
+  border-radius: 10px;
+  margin-bottom: 14px;
+  line-height: 1.45;
+}
