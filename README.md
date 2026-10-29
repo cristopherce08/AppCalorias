@@ -1,6 +1,6 @@
 # MiCalorías 3.1 — PWA local para iPhone (Calorías, Proteínas, Peso & Calculadora)
 
-Aplicación web progresiva gratuita, privada y 100% local, sin backend, sin cuentas de usuario, sin notificaciones y sin servicios externos. Todos los datos y registros se guardan en **IndexedDB** en el iPhone que la abre y funciona sin conexión mediante **Service Worker**.
+Aplicación web progresiva gratuita, privada y local, sin backend, sin cuentas de usuario, sin notificaciones y sin servicios externos. Todos los datos y registros se guardan en **IndexedDB** en el iPhone que la abre y funciona sin conexión mediante **Service Worker**.
 
 ## Novedades de la Versión 3.1
 - **Actualización transparente en pantalla de inicio de iOS**: Detección automática de nuevas versiones publicadas en GitHub Pages mediante `ServiceWorkerRegistration.update()` al abrir la aplicación y al volver a primer plano desde la multitarea de iPhone.

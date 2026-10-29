@@ -1,4 +1,4 @@
-/* MiCalorías 3.0 — Diario de alimentación, proteínas, peso y gasto calórico 100% local.
+/* MiCalorías 3.1 — Diario de alimentación, proteínas, peso y gasto calórico.
    Sin servidores externos, sin cuentas, compatible con Safari iOS y GitHub Pages. */
 'use strict';
 
