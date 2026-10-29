@@ -433,25 +433,6 @@ function renderDiary() {
     protWrap.hidden = true;
   }
 
-  // Accesos rápidos superiores en Hoy
-  const latestWeight = getLatestWeightEntry();
-  if (latestWeight) {
-    $('#shortcut-peso-val').textContent = `${fmt(latestWeight.weight)} kg (${dateShort(latestWeight.date)})`;
-  } else {
-    $('#shortcut-peso-val').textContent = 'Registrar peso';
-  }
-
-  const calcRes = settings.calcResult;
-  if (calcRes && (calcRes.tdee || calcRes.tdeeMin)) {
-    if (calcRes.isRange) {
-      $('#shortcut-calc-val').textContent = `Mant: ${fmt(calcRes.tdeeMin)}–${fmt(calcRes.tdeeMax)} kcal`;
-    } else {
-      $('#shortcut-calc-val').textContent = `Mant: ${fmt(calcRes.tdee)} kcal`;
-    }
-  } else {
-    $('#shortcut-calc-val').textContent = 'Estimar gasto';
-  }
-
   // Banner de aviso si cambió la estimación por nuevo peso
   const pending = settings.pendingGoalReview;
   const banner = $('#calc-update-banner');
@@ -2244,10 +2225,6 @@ function attachEvents() {
     const h = new Date().getHours();
     openQuickAdd(h < 11 ? 'desayuno' : h < 16 ? 'almuerzo' : 'cena');
   });
-
-  // Accesos rápidos de Hoy
-  $('#btn-shortcut-peso').addEventListener('click', () => showView('peso'));
-  $('#btn-shortcut-calc').addEventListener('click', () => showView('calculadora'));
 
   // Banner de actualización de estimación
   $('#btn-review-goal-banner').addEventListener('click', () => {

@@ -1342,48 +1342,6 @@ h1 {
   color: #92400e;
 }
 
-/* ACCESOS RÁPIDOS EN HOY (SHORTCUTS) */
-.quick-shortcuts-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 9px;
-  margin-bottom: 14px;
-}
-.shortcut-chip {
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 10px 12px;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  text-align: left;
-  box-shadow: var(--shadow-sm);
-}
-.shortcut-chip:active {
-  background: #f8f9fc;
-}
-.shortcut-icon {
-  font-size: 20px;
-  line-height: 1;
-  flex-shrink: 0;
-}
-.shortcut-title {
-  display: block;
-  font-size: 12.5px;
-  font-weight: 780;
-  color: var(--ink);
-}
-.shortcut-sub {
-  display: block;
-  font-size: 11px;
-  color: var(--sub);
-  margin-top: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 /* CAJA DE MANTENIMIENTO INFORMATIVO EN TOTAL CONSUMIDO */
 .maint-ref-box {
   margin-top: 10px;
