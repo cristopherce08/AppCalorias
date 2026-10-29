@@ -55,6 +55,25 @@ body {
   position: relative;
 }
 
+/* touch-action no se hereda; se declara explícitamente en contenedores, tarjetas y modales */
+.app-shell,
+#main-content,
+.view,
+.dual-total-card,
+.total-metric,
+.meal-card,
+.maint-ref-card,
+.settings-card,
+.settings-nav-card,
+.entry-dialog,
+.date-picker-row,
+header,
+main,
+section,
+article {
+  touch-action: manipulation;
+}
+
 button, input, select, textarea, a, label {
   font: inherit;
   touch-action: manipulation;
