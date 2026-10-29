@@ -22,7 +22,7 @@ export function renderSettingsView() {
 
   if (goalInput) goalInput.value = settings.goal ?? '';
   if (protInput) protInput.value = settings.proteinGoal ?? '';
-  if (versionLabel) versionLabel.textContent = `${APP_DISPLAY_VERSION} · PWA Modular Local`;
+  if (versionLabel) versionLabel.textContent = APP_DISPLAY_VERSION;
 
   checkStorageStatus();
 }
@@ -109,6 +109,34 @@ export function initSettingsListeners() {
   // Persistencia
   const btnPersist = $('#btn-persist');
   if (btnPersist) btnPersist.addEventListener('click', requestPersistence);
+
+  // Búsqueda manual de actualizaciones PWA
+  const btnCheckUpdate = $('#btn-check-update');
+  if (btnCheckUpdate) {
+    btnCheckUpdate.addEventListener('click', async () => {
+      btnCheckUpdate.disabled = true;
+      const originalText = btnCheckUpdate.textContent;
+      btnCheckUpdate.textContent = 'Comprobando en GitHub Pages...';
+      try {
+        if (!navigator.onLine) {
+          toast('Sin conexión a internet');
+          return;
+        }
+        const { checkForUpdates } = await import('../../services/pwa/serviceWorker.js');
+        const res = await checkForUpdates(undefined, true);
+        if (res?.status === 'found') {
+          toast('Nueva versión detectada. Descargando...');
+        } else {
+          toast('Ya tienes la versión más reciente (Build 4.0.4)');
+        }
+      } catch (err) {
+        toast('No se pudo comprobar la actualización');
+      } finally {
+        btnCheckUpdate.disabled = false;
+        btnCheckUpdate.textContent = originalText;
+      }
+    });
+  }
 
   // Exportar respaldo
   const btnExport = $('#btn-export');

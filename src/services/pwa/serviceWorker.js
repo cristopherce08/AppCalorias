@@ -107,7 +107,7 @@ export function hideUpdateBanner() {
  */
 export function applyPendingUpdate(force = false) {
   const targetWorker = waitingWorker || swRegistration?.waiting;
-  if (!targetWorker) return false;
+  if (!targetWorker || targetWorker.state === 'redundant') return false;
 
   if (!force && hasUnsavedChanges()) {
     showUpdateBanner();
@@ -134,23 +134,37 @@ function handleWaitingWorker(worker) {
   }
 }
 
-export async function checkForUpdates(registration = swRegistration) {
-  if (!registration || !navigator.onLine) return;
+/**
+ * Consulta activamente al servidor si existe una nueva versión de sw.js
+ * @param {ServiceWorkerRegistration} [registration=swRegistration]
+ * @param {boolean} [force=false] Bypassear el intervalo mínimo de verificación
+ */
+export async function checkForUpdates(registration = swRegistration, force = false) {
+  if (!registration || !navigator.onLine) {
+    return { status: !navigator.onLine ? 'offline' : 'no_registration' };
+  }
   const now = Date.now();
-  if (now - lastUpdateCheck < MIN_CHECK_INTERVAL_MS) return;
+  if (!force && now - lastUpdateCheck < MIN_CHECK_INTERVAL_MS) {
+    return { status: 'throttled' };
+  }
   lastUpdateCheck = now;
 
   try {
-    await registration.update();
+    const reg = await registration.update();
+    if (reg.installing || reg.waiting) {
+      return { status: 'found' };
+    }
+    return { status: 'latest' };
   } catch (err) {
     console.debug('Comprobación de actualización omitida o sin conexión:', err);
+    return { status: 'error', error: err };
   }
 }
 
 export function setupServiceWorker() {
   if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
 
-  // Manejo del botón manual de actualización
+  // Manejo del botón manual de actualización del banner
   const btnApply = document.getElementById('btn-apply-update');
   if (btnApply) {
     btnApply.addEventListener('click', () => {
@@ -167,10 +181,16 @@ export function setupServiceWorker() {
     });
   }
 
-  // Prevención de bucles infinitos de recarga
+  // Prevención de bucles infinitos de recarga y control de activación
+  const hadExistingController = Boolean(navigator.serviceWorker.controller);
   let isRefreshing = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (isRefreshing) return;
+
+    // Si es la primera instalación limpia sin controlador anterior, evitar recarga
+    if (!hadExistingController) {
+      return;
+    }
 
     // Salvaguarda contra recargas cíclicas (< 3 segundos desde la última)
     const lastReload = Number(sessionStorage.getItem('sw_last_reload') || 0);

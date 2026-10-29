@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kalora-shell-v4.0.3';
+const CACHE_NAME = 'kalora-shell-v4.0.4';
 const ASSETS = [
   './',
   './index.html',
@@ -50,6 +50,19 @@ const ASSETS = [
   './src/styles/features.css'
 ];
 
+/**
+ * Determina si una clave de CacheStorage pertenece a versiones obsoletas de esta aplicación.
+ * Preserva estrictamente:
+ * 1. La caché activa (CACHE_NAME).
+ * 2. Cachés protegidas de otras instancias/variantes (p. ej. micalorias-estable-shell-*).
+ * 3. Cachés desconocidas o ajenas a este proyecto.
+ */
+function isLegacyAppCache(key) {
+  if (key === CACHE_NAME) return false;
+  if (key.startsWith('micalorias-estable-shell-')) return false;
+  return key.startsWith('kalora-shell-') || key.startsWith('micalorias-shell-');
+}
+
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(async cache => {
@@ -67,12 +80,15 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   event.waitUntil(
     Promise.all([
-      // Eliminar únicamente cachés shell antiguas, preservando cualquier otro almacenamiento
+      // Eliminar únicamente cachés shell obsoletas de esta aplicación
       caches.keys().then(keys => {
         return Promise.all(
           keys
-            .filter(key => key.startsWith('micalorias-shell-') && key !== CACHE_NAME)
-            .map(key => caches.delete(key))
+            .filter(isLegacyAppCache)
+            .map(key => {
+              console.log(`[SW] Purgando caché previa obsoleta: ${key}`);
+              return caches.delete(key);
+            })
         );
       }),
       self.clients.claim()
@@ -93,16 +109,22 @@ self.addEventListener('fetch', event => {
   if (url.origin !== self.location.origin) return;
 
   event.respondWith(
-    caches.match(request, { ignoreSearch: true }).then(cached => {
+    caches.open(CACHE_NAME).then(async cache => {
+      // Buscar exclusivamente dentro de la caché activa de la versión actual
+      const cached = await cache.match(request, { ignoreSearch: true });
       if (cached) return cached;
-      return fetch(request).catch(() => {
+
+      try {
+        return await fetch(request);
+      } catch (err) {
         if (request.mode === 'navigate') {
-          return caches.match('./index.html');
+          const fallback = (await cache.match('./index.html')) || (await cache.match('./'));
+          if (fallback) return fallback;
         }
         return (typeof Response.error === 'function')
           ? Response.error()
           : new Response(null, { status: 408 });
-      });
+      }
     })
   );
 });
