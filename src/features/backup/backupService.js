@@ -2,7 +2,7 @@
  * backupService.js — Servicio determinista de respaldo: exportación e importación segura
  * Soluciona la doble descarga y garantiza compatibilidad con esquemas v1, v2 y v3.
  */
-import { getState, setState, refreshState } from '../../app/state.js';
+import { getState, setState, refreshState, beginAsyncOperation, endAsyncOperation } from '../../app/state.js';
 import { navigateTo } from '../../app/router.js';
 import { todayISO } from '../../utils/dates.js';
 import { buildBackupPayload, getBackupFilename, validateAndMigrateImport } from '../../utils/validation.js';
@@ -25,6 +25,7 @@ export async function exportBackup(event) {
 
   if (isExporting) return;
   isExporting = true;
+  beginAsyncOperation('export');
 
   const exportBtn = $('#btn-export');
   const originalText = exportBtn ? exportBtn.textContent : '';
@@ -90,6 +91,7 @@ export async function exportBackup(event) {
     console.error('Error al exportar datos:', err);
     toast('No se pudo exportar el respaldo');
   } finally {
+    endAsyncOperation('export');
     // Ventana de seguridad (600ms) contra rebotes táctiles
     setTimeout(() => {
       if (exportBtn) {
@@ -109,6 +111,7 @@ export async function exportBackup(event) {
 export async function importBackup(file) {
   if (!file) return;
 
+  beginAsyncOperation('import');
   try {
     if (file.size > 50_000_000) {
       throw new Error('El archivo supera los 50 MB permitidos');
@@ -131,5 +134,7 @@ export async function importBackup(file) {
   } catch (err) {
     console.error('Error al importar respaldo:', err);
     alert(`No se importó el respaldo: ${err.message || 'formato inválido'}`);
+  } finally {
+    endAsyncOperation('import');
   }
 }

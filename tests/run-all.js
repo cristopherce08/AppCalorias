@@ -12,6 +12,8 @@ try {
   console.log('');
   await import('./unit/validation.test.js');
   console.log('');
+  await import('./unit/updateSafety.test.js');
+  console.log('');
   await import('./integration/database.test.js');
   console.log('\n====================================================');
   console.log('  ✔ TODAS LAS PRUEBAS PASARON EXITOSAMENTE (100%)    ');

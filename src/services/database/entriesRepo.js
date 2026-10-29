@@ -1,10 +1,14 @@
 /**
  * entriesRepo.js — Repositorio de persistencia para el diario de comidas
  */
-import { getAll, mutate } from './db.js';
+import { getAll, getByIndex, mutate } from './db.js';
 
 export async function getEntries() {
   return getAll('entries');
+}
+
+export async function getEntriesByDate(date) {
+  return getByIndex('entries', 'date', date);
 }
 
 export async function saveEntry(entry) {

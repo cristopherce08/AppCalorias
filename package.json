@@ -5,9 +5,14 @@
   "type": "module",
   "scripts": {
     "test": "node tests/run-all.js",
+    "test:e2e": "node tests/e2e/e2e.test.js",
     "start": "npx serve -l 3000 ."
   },
   "author": "cristopherce08",
   "license": "MIT",
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "fake-indexeddb": "^6.2.6",
+    "playwright": "^1.64.1"
+  }
 }

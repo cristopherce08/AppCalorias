@@ -41,6 +41,7 @@ const ASSETS = [
   './src/utils/nutrition.js',
   './src/utils/energy.js',
   './src/utils/validation.js',
+  './src/utils/version.js',
   './src/styles/tokens.css',
   './src/styles/base.css',
   './src/styles/layout.css',

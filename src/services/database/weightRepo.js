@@ -1,14 +1,18 @@
 /**
- * weightRepo.js — Repositorio de registros de peso corporal
+ * weightRepo.js — Repositorio de persistencia para el seguimiento de peso corporal
  */
-import { getAll, mutate } from './db.js';
+import { getAll, getByIndex, mutate } from './db.js';
 
 export async function getWeightEntries() {
   return getAll('weightEntries');
 }
 
-export async function saveWeightEntry(item) {
-  return mutate('weightEntries', 'put', item);
+export async function getWeightEntriesByDate(date) {
+  return getByIndex('weightEntries', 'date', date);
+}
+
+export async function saveWeightEntry(weightItem) {
+  return mutate('weightEntries', 'put', weightItem);
 }
 
 export async function deleteWeightEntry(id) {

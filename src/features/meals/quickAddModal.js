@@ -1,7 +1,7 @@
 /**
  * quickAddModal.js — Modal y flujo interactivo de registro rápido de comidas
  */
-import { getState, setState, refreshState } from '../../app/state.js';
+import { getState, setState, refreshState, beginAsyncOperation, endAsyncOperation } from '../../app/state.js';
 import { navigateTo } from '../../app/router.js';
 import { fmt, esc } from '../../utils/formatting.js';
 import { makeId, keyName } from '../../utils/dates.js';
@@ -22,6 +22,7 @@ export function openQuickAdd(meal = 'desayuno') {
   stagedMeal = meal;
   stagedItems = [];
   selectedFoodForQuickAdd = null;
+  setState({ stagedItems: [] });
 
   document.querySelectorAll('.meal-chip').forEach(chip => {
     chip.classList.toggle('active', chip.dataset.mealChoice === stagedMeal);
@@ -216,6 +217,7 @@ function addStagedItemFromLibrary() {
   };
 
   stagedItems.push(staged);
+  setState({ stagedItems: stagedItems.slice() });
   hideSelectedFoodPanel();
   renderStagedSection();
   toast(`“${staged.name}” añadido a la lista`);
@@ -304,6 +306,7 @@ function addStagedItemFromManual() {
   };
 
   stagedItems.push(staged);
+  setState({ stagedItems: stagedItems.slice() });
   const form = $('#quick-add-manual-form');
   if (form) form.reset();
   if (saveLibCheck) saveLibCheck.checked = true;
@@ -384,6 +387,7 @@ function renderStagedSection() {
 async function saveEntireMeal() {
   if (!stagedItems.length || isSaving) return;
   isSaving = true;
+  beginAsyncOperation('save-meal');
   const saveBtn = $('#btn-save-entire-meal');
   if (saveBtn) {
     saveBtn.disabled = true;
@@ -421,6 +425,7 @@ async function saveEntireMeal() {
     }
 
     stagedItems = [];
+    setState({ stagedItems: [] });
     closeQuickAdd();
     await refreshState();
     navigateTo('diario');
@@ -430,6 +435,7 @@ async function saveEntireMeal() {
     toast('Error al guardar la comida');
   } finally {
     isSaving = false;
+    endAsyncOperation('save-meal');
     if (saveBtn) {
       saveBtn.disabled = false;
       saveBtn.textContent = 'Guardar comida';
@@ -545,6 +551,7 @@ export function initQuickAddListeners() {
       const idx = Number(btn.dataset.removeStaged);
       if (Number.isFinite(idx)) {
         stagedItems.splice(idx, 1);
+        setState({ stagedItems: stagedItems.slice() });
         renderStagedSection();
       }
     });

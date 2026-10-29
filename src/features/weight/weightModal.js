@@ -1,7 +1,7 @@
 /**
  * weightModal.js — Modal para registrar o editar mediciones de peso corporal
  */
-import { getState, refreshState } from '../../app/state.js';
+import { getState, refreshState, beginAsyncOperation, endAsyncOperation } from '../../app/state.js';
 import { makeId, todayISO, validDate } from '../../utils/dates.js';
 import { calculateMifflinStJeor } from '../../utils/energy.js';
 import { saveWeightEntry } from '../../services/database/weightRepo.js';
@@ -12,6 +12,7 @@ import { toast } from '../../components/Toast.js';
 const $ = sel => document.querySelector(sel);
 
 let editingWeightId = null;
+let isSaving = false;
 
 export function openWeightDialog(weightItem = null) {
   editingWeightId = weightItem?.id || null;
@@ -41,6 +42,7 @@ export function closeWeightDialog() {
 
 async function handleSaveWeightEntry(event) {
   event.preventDefault();
+  if (isSaving) return;
   const date = $('#w-date-input')?.value;
   const weight = Number($('#w-val-input')?.value);
   const note = $('#w-note-input')?.value.trim() || '';
@@ -66,6 +68,8 @@ async function handleSaveWeightEntry(event) {
     createdAt: existingSameDate?.createdAt || new Date().toISOString()
   };
 
+  isSaving = true;
+  beginAsyncOperation('save-weight');
   try {
     await saveWeightEntry(entry);
     closeWeightDialog();
@@ -117,6 +121,9 @@ async function handleSaveWeightEntry(event) {
   } catch (err) {
     console.error(err);
     toast('Error al guardar el peso');
+  } finally {
+    isSaving = false;
+    endAsyncOperation('save-weight');
   }
 }
 

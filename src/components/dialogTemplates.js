@@ -3,7 +3,7 @@
  * Inyecta los cuadros modales al DOM de forma limpia si no están presentes en el cascarón HTML.
  */
 
-export const DIALOGS_HTML = \`<dialog id="weight-dialog" class="entry-dialog" aria-labelledby="weight-dialog-title">
+export const DIALOGS_HTML = `<dialog id="weight-dialog" class="entry-dialog" aria-labelledby="weight-dialog-title">
     <form id="weight-form" class="entry-form">
       <div class="dialog-head">
         <div>
@@ -472,7 +472,7 @@ export const DIALOGS_HTML = \`<dialog id="weight-dialog" class="entry-dialog" ar
 
       <button type="submit" id="btn-confirm-use-food" class="primary-button wide-button">Añadir a mi comida</button>
     </form>
-  </dialog>\`;
+  </dialog>`;
 
 export function mountDialogTemplates() {
   if (typeof document === "undefined") return;

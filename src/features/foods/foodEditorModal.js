@@ -1,7 +1,7 @@
 /**
  * foodEditorModal.js — Modal para creación y edición de alimentos en la biblioteca recurrente
  */
-import { getState, refreshState } from '../../app/state.js';
+import { getState, refreshState, beginAsyncOperation, endAsyncOperation } from '../../app/state.js';
 import { makeId } from '../../utils/dates.js';
 import { saveFood } from '../../services/database/foodsRepo.js';
 import { openModal, closeModal } from '../../components/Modal.js';
@@ -10,6 +10,7 @@ import { toast } from '../../components/Toast.js';
 const $ = sel => document.querySelector(sel);
 
 let editingFoodId = null;
+let isSaving = false;
 
 export function openFoodEditor(food = null) {
   editingFoodId = food?.id || null;
@@ -73,6 +74,7 @@ export function closeFoodEditor() {
 
 async function handleSaveFoodItem(event) {
   event.preventDefault();
+  if (isSaving) return;
   const name = $('#f-name')?.value.trim();
   const brand = $('#f-brand')?.value.trim() || '';
   const baseType = document.querySelector('input[name="f-base-type"]:checked')?.value || 'weight_volume';
@@ -144,6 +146,8 @@ async function handleSaveFoodItem(event) {
     updatedAt: new Date().toISOString()
   };
 
+  isSaving = true;
+  beginAsyncOperation('save-food');
   try {
     await saveFood(record);
     closeFoodEditor();
@@ -152,6 +156,9 @@ async function handleSaveFoodItem(event) {
   } catch (err) {
     console.error(err);
     toast('No se pudo guardar');
+  } finally {
+    isSaving = false;
+    endAsyncOperation('save-food');
   }
 }
 

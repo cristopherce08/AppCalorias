@@ -25,8 +25,47 @@ let state = {
   editingWeightId: null,
   activeScenario: 'maintain',
   isSaving: false,
-  isExporting: false
+  isExporting: false,
+  isImporting: false
 };
+
+const activeOperations = new Set();
+
+/**
+ * Registra el inicio de una operación asíncrona crítica
+ * @param {string} opName 
+ */
+export function beginAsyncOperation(opName) {
+  activeOperations.add(opName);
+  if (opName.includes('save') || opName.includes('entry') || opName.includes('food') || opName.includes('weight')) {
+    setState({ isSaving: true });
+  } else if (opName.includes('export')) {
+    setState({ isExporting: true });
+  } else if (opName.includes('import')) {
+    setState({ isImporting: true });
+  }
+}
+
+/**
+ * Registra la finalización de una operación asíncrona crítica
+ * @param {string} opName 
+ */
+export function endAsyncOperation(opName) {
+  activeOperations.delete(opName);
+  setState({
+    isSaving: [...activeOperations].some(op => op.includes('save') || op.includes('entry') || op.includes('food') || op.includes('weight')),
+    isExporting: [...activeOperations].some(op => op.includes('export')),
+    isImporting: [...activeOperations].some(op => op.includes('import'))
+  });
+}
+
+/**
+ * Comprueba si existen operaciones asíncronas activas
+ * @returns {boolean}
+ */
+export function isPerformingAsyncOperation() {
+  return activeOperations.size > 0 || state.isSaving || state.isExporting || state.isImporting;
+}
 
 const listeners = new Set();
 

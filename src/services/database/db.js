@@ -1,5 +1,5 @@
 /**
- * db.js — Conexión y operaciones de bajo nivel con IndexedDB
+ * db.js — Conexión y operaciones atómicas de bajo nivel con IndexedDB
  * Mantiene intacto el nombre 'micalorias-local-v1' y el esquema v3.
  */
 
@@ -7,20 +7,32 @@ export const DB_NAME = 'micalorias-local-v1';
 export const DB_VERSION = 3;
 
 let dbInstance = null;
+let activeDbName = DB_NAME;
 
 /**
  * Abre o reutiliza la conexión activa a IndexedDB
+ * @param {string} [name=DB_NAME]
+ * @param {number} [version=DB_VERSION]
  * @returns {Promise<IDBDatabase>}
  */
-export function openDatabase() {
-  if (dbInstance) return Promise.resolve(dbInstance);
+export function openDatabase(name = activeDbName, version = DB_VERSION) {
+  if (dbInstance && activeDbName === name) {
+    return Promise.resolve(dbInstance);
+  }
+
+  if (dbInstance && activeDbName !== name) {
+    dbInstance.close();
+    dbInstance = null;
+  }
+
+  activeDbName = name;
 
   return new Promise((resolve, reject) => {
     if (typeof indexedDB === 'undefined') {
       return reject(new Error('IndexedDB no está disponible en este entorno'));
     }
 
-    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    const req = indexedDB.open(activeDbName, version);
 
     req.onupgradeneeded = () => {
       const db = req.result;
@@ -55,6 +67,25 @@ export function openDatabase() {
 }
 
 /**
+ * Cierra la instancia activa de la base de datos
+ */
+export function closeDatabase() {
+  if (dbInstance) {
+    dbInstance.close();
+    dbInstance = null;
+  }
+}
+
+/**
+ * Permite aislar el nombre de la base de datos para pruebas automatizadas
+ * @param {string} name 
+ */
+export function setDatabaseNameForTesting(name) {
+  closeDatabase();
+  activeDbName = name || DB_NAME;
+}
+
+/**
  * Obtiene todos los registros de una tabla de IndexedDB
  * @param {'entries'|'foods'|'settings'|'weightEntries'} table 
  * @returns {Promise<Array>}
@@ -64,6 +95,24 @@ export async function getAll(table) {
   return new Promise((resolve, reject) => {
     const tx = db.transaction(table, 'readonly');
     const req = tx.objectStore(table).getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+/**
+ * Obtiene registros que coincidan con un índice determinado
+ * @param {'entries'|'foods'|'settings'|'weightEntries'} table 
+ * @param {string} indexName 
+ * @param {*} key 
+ * @returns {Promise<Array>}
+ */
+export async function getByIndex(table, indexName, key) {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(table, 'readonly');
+    const index = tx.objectStore(table).index(indexName);
+    const req = index.getAll(key);
     req.onsuccess = () => resolve(req.result || []);
     req.onerror = () => reject(req.error);
   });

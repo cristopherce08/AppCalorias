@@ -1,34 +1,90 @@
 /**
  * serviceWorker.js — Gestión del ciclo de vida y actualizaciones automáticas del Service Worker en iOS
+ * Implementa salvaguardas contra recargas intempestivas cuando el usuario tiene operaciones activas o datos sin guardar.
  */
-import { getState } from '../../app/state.js';
+import { getState, isPerformingAsyncOperation } from '../../app/state.js';
+import { toast } from '../../components/Toast.js';
 
 let swRegistration = null;
 let waitingWorker = null;
 let lastUpdateCheck = 0;
 const MIN_CHECK_INTERVAL_MS = 60 * 1000;
 
-function isUserBusy() {
+/**
+ * Evalúa de forma exhaustiva si existen operaciones en curso o datos sin guardar
+ * @returns {boolean}
+ */
+export function hasUnsavedChanges() {
   const state = getState();
-  if (state.isSaving || state.isExporting) return true;
+
+  // 1. Operaciones asíncronas activas (guardado, exportación, importación)
+  if (state.isSaving || state.isExporting || state.isImporting) return true;
+  if (isPerformingAsyncOperation()) return true;
+
+  // 2. Alimentos en bandeja (staged) aún no guardados en IndexedDB
   if (Array.isArray(state.stagedItems) && state.stagedItems.length > 0) return true;
 
-  // Comprobar si algún diálogo modal se encuentra abierto
-  if (typeof document !== 'undefined') {
-    const openDialogs = document.querySelectorAll('dialog[open]');
-    if (openDialogs.length > 0) return true;
+  if (typeof document === 'undefined') return false;
 
-    // Comprobar si hay foco activo en campos de entrada
-    const active = document.activeElement;
-    if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT')) {
+  // 3. Inspeccionar diálogos modales abiertos con información pendiente
+  const quickAdd = document.getElementById('quick-add-dialog');
+  if (quickAdd && quickAdd.open) {
+    const manualName = document.getElementById('manual-name')?.value?.trim();
+    const stagedCount = document.getElementById('staged-items-list')?.children?.length || 0;
+    const selectedPanel = document.getElementById('quick-selected-panel');
+    if (stagedCount > 0 || manualName || (selectedPanel && !selectedPanel.hidden)) {
       return true;
+    }
+  }
+
+  const foodDialog = document.getElementById('food-dialog');
+  if (foodDialog && foodDialog.open) {
+    const name = document.getElementById('f-name')?.value?.trim();
+    if (name) return true;
+  }
+
+  const weightDialog = document.getElementById('weight-dialog');
+  if (weightDialog && weightDialog.open) {
+    const wVal = document.getElementById('w-val-input')?.value?.trim();
+    if (wVal) return true;
+  }
+
+  const entryDialog = document.getElementById('entry-dialog');
+  if (entryDialog && entryDialog.open) {
+    return true; // Edición de comida en curso
+  }
+
+  const useFoodDialog = document.getElementById('use-food-dialog');
+  if (useFoodDialog && useFoodDialog.open) {
+    return true;
+  }
+
+  const goalDialog = document.getElementById('goal-confirm-dialog');
+  if (goalDialog && goalDialog.open) {
+    return true;
+  }
+
+  // 4. Campos con foco activo donde el usuario pueda estar escribiendo
+  const active = document.activeElement;
+  if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
+    if (active.type !== 'button' && active.type !== 'submit' && active.type !== 'date' && active.type !== 'checkbox') {
+      if (active.value && active.value.trim().length > 0) {
+        return true;
+      }
     }
   }
 
   return false;
 }
 
-function showUpdateBanner() {
+/**
+ * Determina si el usuario está ocupado (alias para control de ciclo de vida)
+ */
+export function isUserBusy() {
+  return hasUnsavedChanges();
+}
+
+export function showUpdateBanner() {
   if (typeof document === 'undefined') return;
   const banner = document.getElementById('update-banner');
   if (banner) {
@@ -36,23 +92,43 @@ function showUpdateBanner() {
   }
 }
 
-export function applyPendingUpdate() {
-  const targetWorker = waitingWorker || swRegistration?.waiting;
-  if (targetWorker) {
-    targetWorker.postMessage({ type: 'SKIP_WAITING' });
+export function hideUpdateBanner() {
+  if (typeof document === 'undefined') return;
+  const banner = document.getElementById('update-banner');
+  if (banner) {
+    banner.hidden = true;
   }
 }
 
+/**
+ * Solicita al Service Worker en espera que se active
+ * @param {boolean} [force=false] Forzar actualización ignorando cambios sin guardar tras confirmación expresa
+ * @returns {boolean} Retorna true si se envió el mensaje de activación
+ */
+export function applyPendingUpdate(force = false) {
+  const targetWorker = waitingWorker || swRegistration?.waiting;
+  if (!targetWorker) return false;
+
+  if (!force && hasUnsavedChanges()) {
+    showUpdateBanner();
+    return false;
+  }
+
+  targetWorker.postMessage({ type: 'SKIP_WAITING' });
+  return true;
+}
+
 export function checkPendingUpdateOnIdle() {
-  if (waitingWorker && !isUserBusy()) {
+  if (waitingWorker && !hasUnsavedChanges()) {
+    // Si ya no hay tareas en curso, mostrar aviso o aplicar actualización segura
     showUpdateBanner();
   }
 }
 
 function handleWaitingWorker(worker) {
   waitingWorker = worker;
-  if (!isUserBusy()) {
-    applyPendingUpdate();
+  if (!hasUnsavedChanges()) {
+    applyPendingUpdate(false);
   } else {
     showUpdateBanner();
   }
@@ -74,15 +150,38 @@ export async function checkForUpdates(registration = swRegistration) {
 export function setupServiceWorker() {
   if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
 
+  // Manejo del botón manual de actualización
   const btnApply = document.getElementById('btn-apply-update');
   if (btnApply) {
-    btnApply.addEventListener('click', applyPendingUpdate);
+    btnApply.addEventListener('click', () => {
+      if (hasUnsavedChanges()) {
+        const proceed = confirm('Tienes datos o formularios sin guardar en pantalla.\n\n¿Deseas descartarlos y actualizar a la nueva versión ahora?');
+        if (proceed) {
+          applyPendingUpdate(true);
+        } else {
+          toast('Actualización pospuesta. Guarda tus cambios antes de actualizar.');
+        }
+      } else {
+        applyPendingUpdate(true);
+      }
+    });
   }
 
+  // Prevención de bucles infinitos de recarga
   let isRefreshing = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (isRefreshing) return;
+
+    // Salvaguarda contra recargas cíclicas (< 3 segundos desde la última)
+    const lastReload = Number(sessionStorage.getItem('sw_last_reload') || 0);
+    const now = Date.now();
+    if (now - lastReload < 3000) {
+      console.warn('Recarga suprimida para evitar bucle de actualización');
+      return;
+    }
+
     isRefreshing = true;
+    sessionStorage.setItem('sw_last_reload', String(now));
     window.location.reload();
   });
 
@@ -107,10 +206,11 @@ export function setupServiceWorker() {
 
       checkForUpdates(registration);
 
+      // Comprobaciones inteligentes al reanudar aplicación desde segundo plano en iOS
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
-          if (waitingWorker && !isUserBusy()) {
-            applyPendingUpdate();
+          if (waitingWorker && !hasUnsavedChanges()) {
+            applyPendingUpdate(false);
           } else {
             checkForUpdates(registration);
           }
@@ -118,8 +218,8 @@ export function setupServiceWorker() {
       });
 
       window.addEventListener('focus', () => {
-        if (waitingWorker && !isUserBusy()) {
-          applyPendingUpdate();
+        if (waitingWorker && !hasUnsavedChanges()) {
+          applyPendingUpdate(false);
         } else {
           checkForUpdates(registration);
         }
@@ -127,6 +227,13 @@ export function setupServiceWorker() {
 
       window.addEventListener('online', () => {
         checkForUpdates(registration);
+      });
+
+      // Escuchar cuando se cierran diálogos para evaluar si la app quedó en reposo (idle)
+      document.querySelectorAll('dialog').forEach(dlg => {
+        dlg.addEventListener('close', () => {
+          setTimeout(checkPendingUpdateOnIdle, 300);
+        });
       });
     })
     .catch(err => {

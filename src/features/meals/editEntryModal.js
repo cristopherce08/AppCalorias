@@ -1,7 +1,7 @@
 /**
  * editEntryModal.js — Modal para la edición de registros puntuales de alimentos consumidos
  */
-import { getState, refreshState } from '../../app/state.js';
+import { getState, refreshState, beginAsyncOperation, endAsyncOperation } from '../../app/state.js';
 import { fmt } from '../../utils/formatting.js';
 import { computeNutrition } from '../../utils/nutrition.js';
 import { saveEntry } from '../../services/database/entriesRepo.js';
@@ -105,6 +105,7 @@ async function handleSaveEditEntry(event) {
   }
 
   isSaving = true;
+  beginAsyncOperation('edit-entry');
   const isPortion = e.baseType === 'portion';
   let protDensity = null;
   if (protRaw !== '' && Number.isFinite(Number(protRaw)) && Number(protRaw) >= 0) {
@@ -145,6 +146,7 @@ async function handleSaveEditEntry(event) {
     toast('Error al actualizar');
   } finally {
     isSaving = false;
+    endAsyncOperation('edit-entry');
   }
 }
 

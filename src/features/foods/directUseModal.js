@@ -1,7 +1,7 @@
 /**
  * directUseModal.js — Modal para incorporar directamente un alimento de la biblioteca a una comida
  */
-import { getState, refreshState } from '../../app/state.js';
+import { getState, refreshState, beginAsyncOperation, endAsyncOperation } from '../../app/state.js';
 import { navigateTo } from '../../app/router.js';
 import { fmt } from '../../utils/formatting.js';
 import { makeId } from '../../utils/dates.js';
@@ -90,6 +90,7 @@ async function handleConfirmDirectUse(event) {
   }
 
   isSaving = true;
+  beginAsyncOperation('direct-use');
   const meal = $('#u-meal-select')?.value || 'desayuno';
   const isPortion = activeFoodForDirectUse.baseType === 'portion';
   const computed = computeNutrition({
@@ -133,6 +134,7 @@ async function handleConfirmDirectUse(event) {
     toast('Error al guardar');
   } finally {
     isSaving = false;
+    endAsyncOperation('direct-use');
   }
 }
 

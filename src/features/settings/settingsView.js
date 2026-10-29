@@ -3,6 +3,7 @@
  */
 import { getState, refreshState } from '../../app/state.js';
 import { navigateTo } from '../../app/router.js';
+import { APP_DISPLAY_VERSION } from '../../utils/version.js';
 import { setSetting } from '../../services/database/settingsRepo.js';
 import { toast } from '../../components/Toast.js';
 import { exportBackup, importBackup } from '../backup/backupService.js';
@@ -17,9 +18,11 @@ export function renderSettingsView() {
 
   const goalInput = $('#goal-input');
   const protInput = $('#protein-goal-input');
+  const versionLabel = $('#app-version-label');
 
   if (goalInput) goalInput.value = settings.goal ?? '';
   if (protInput) protInput.value = settings.proteinGoal ?? '';
+  if (versionLabel) versionLabel.textContent = `${APP_DISPLAY_VERSION} · PWA Modular Local`;
 
   checkStorageStatus();
 }
