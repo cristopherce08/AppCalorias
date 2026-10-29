@@ -1287,3 +1287,542 @@ h1 {
     border-radius: 16px 16px 0 0;
   }
 }
+
+/* ========================================================
+   ESTILOS DE LA VERSIÓN 3.0 (PESO, CALCULADORA Y ATALJOS)
+   ======================================================== */
+
+/* BANNER DE ACTUALIZACIÓN DE ESTIMACIÓN */
+.banner-alert {
+  background: #fffbeb;
+  border: 1.5px solid #fde68a;
+  border-radius: 16px;
+  padding: 14px 15px;
+  margin-bottom: 15px;
+  box-shadow: var(--shadow-sm);
+}
+.banner-content {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.banner-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+.banner-content strong {
+  display: block;
+  font-size: 13.5px;
+  color: #92400e;
+}
+.banner-content p {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: #78350f;
+  line-height: 1.45;
+}
+.banner-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.banner-btn {
+  border: 0;
+  border-radius: 9px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 750;
+}
+.banner-btn.primary {
+  background: #d97706;
+  color: #fff;
+}
+.banner-btn.secondary {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* ACCESOS RÁPIDOS EN HOY (SHORTCUTS) */
+.quick-shortcuts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+  margin-bottom: 14px;
+}
+.shortcut-chip {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  text-align: left;
+  box-shadow: var(--shadow-sm);
+}
+.shortcut-chip:active {
+  background: #f8f9fc;
+}
+.shortcut-icon {
+  font-size: 20px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.shortcut-title {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 780;
+  color: var(--ink);
+}
+.shortcut-sub {
+  display: block;
+  font-size: 11px;
+  color: var(--sub);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* CAJA DE MANTENIMIENTO INFORMATIVO EN TOTAL CONSUMIDO */
+.maint-ref-box {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.maint-tag {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.maint-text {
+  font-size: 11.5px;
+  font-weight: 650;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+/* SECCIÓN MI PESO */
+.weight-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 15px;
+}
+.weight-stat-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px 10px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+.stat-label {
+  font-size: 9.5px;
+  letter-spacing: 0.8px;
+  font-weight: 800;
+  color: var(--sub);
+  text-transform: uppercase;
+}
+.stat-value {
+  font-size: 18px;
+  font-weight: 800;
+  margin: 4px 0 2px;
+  color: var(--ink);
+}
+.stat-unit {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--sub);
+}
+.stat-sub {
+  font-size: 10.5px;
+  color: var(--sub);
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* GRÁFICA DE PESO (SVG) */
+.chart-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
+}
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  gap: 8px;
+}
+.chart-header h2 {
+  font-size: 15px;
+  margin: 0;
+}
+.chart-sub {
+  font-size: 11.5px;
+  color: var(--sub);
+}
+.chart-periods {
+  display: flex;
+  gap: 4px;
+}
+.chart-periods .chip {
+  padding: 5px 9px;
+  font-size: 11px;
+}
+.weight-chart-container {
+  width: 100%;
+  height: 200px;
+  background: #fafbfe;
+  border: 1px solid #f0f2f7;
+  border-radius: 13px;
+  position: relative;
+  overflow: hidden;
+}
+.weight-svg-chart {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.chart-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #8c95a8;
+  font-size: 12px;
+  padding: 16px;
+  text-align: center;
+}
+.chart-footer-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+/* TABLA ACCESIBLE DE PESO */
+.accessible-table-wrap {
+  margin-top: 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  text-align: left;
+}
+.data-table th, .data-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #f1f3f8;
+}
+.data-table th {
+  color: var(--sub);
+  font-weight: 750;
+}
+
+/* HISTORIAL DE PESOS */
+.history-lead-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 16px 0 10px;
+}
+.history-lead-row h2 {
+  font-size: 16px;
+  margin: 0;
+}
+.weights-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.weight-row-item {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: var(--shadow-sm);
+}
+.weight-row-left {
+  display: flex;
+  flex-direction: column;
+}
+.w-row-date {
+  font-weight: 780;
+  font-size: 13.5px;
+}
+.w-row-note {
+  font-size: 11px;
+  color: var(--sub);
+  margin-top: 2px;
+}
+.weight-row-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.w-row-val {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.w-diff-badge {
+  font-size: 11px;
+  font-weight: 750;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+.w-diff-badge.down {
+  background: #ecfdf5;
+  color: #047857;
+}
+.w-diff-badge.up {
+  background: #fff1f2;
+  color: #be123c;
+}
+.w-diff-badge.same {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+/* CALCULADORA DE CALORÍAS */
+.param-explanation {
+  font-size: 11px;
+  color: var(--sub);
+  line-height: 1.5;
+  background: #f8fafc;
+  border: 1px solid #edf2f7;
+  padding: 8px 11px;
+  border-radius: 10px;
+  margin: 6px 0 12px;
+}
+.activity-select {
+  border: 1px solid #dbe0eb;
+  border-radius: 12px;
+  padding: 12px 13px;
+  background: #fff;
+  width: 100%;
+  font-size: 14px;
+}
+.result-card {
+  border-left: 4px solid var(--teal);
+}
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+.result-date-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--sub);
+  background: #f1f3f9;
+  padding: 3px 8px;
+  border-radius: 8px;
+}
+.results-comparison-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.result-box {
+  border-radius: 14px;
+  padding: 13px 12px;
+  display: flex;
+  flex-direction: column;
+}
+.rmr-box {
+  background: #f4f2ff;
+  border: 1px solid #e5e0fa;
+}
+.tdee-box {
+  background: #e6fffa;
+  border: 1px solid #bbf7d0;
+}
+.res-box-label {
+  font-size: 9.5px;
+  letter-spacing: 0.8px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.rmr-box .res-box-label { color: #5b4dbf; }
+.tdee-box .res-box-label { color: #0d7066; }
+.res-box-val {
+  font-size: 26px;
+  font-weight: 850;
+  line-height: 1.15;
+  margin: 6px 0 4px;
+}
+.rmr-box .res-box-val { color: var(--purple-dark); }
+.tdee-box .res-box-val { color: var(--teal-dark); }
+.res-box-desc {
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: var(--sub);
+}
+.calc-meta-details {
+  font-size: 11.5px;
+  color: var(--sub);
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+.disclaimer-note {
+  font-size: 11px;
+  line-height: 1.5;
+  background: #fffbeb;
+  border: 1px solid #fef3c7;
+  color: #92400e;
+  padding: 10px 12px;
+  border-radius: 11px;
+  margin-bottom: 14px;
+}
+
+/* ESCENARIOS */
+.scenarios-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-bottom: 8px;
+}
+.scenario-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+}
+.scenario-item.active {
+  border-color: var(--teal);
+  background: #f0fdfa;
+}
+.scenario-sub {
+  display: block;
+  font-size: 11px;
+  color: var(--sub);
+}
+.scenario-kcal {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.scenarios-disclaimer {
+  font-size: 10.5px;
+  color: var(--sub);
+  line-height: 1.45;
+  margin: 6px 0 16px;
+}
+
+/* OPCIONES DECISIÓN (A vs B) */
+.options-decision-box {
+  background: #f8f9fd;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 14px;
+  margin-top: 10px;
+}
+.option-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.option-info strong {
+  display: block;
+  font-size: 13px;
+  color: var(--ink);
+}
+.option-info p {
+  margin: 3px 0 0;
+  font-size: 11.5px;
+  color: var(--sub);
+  line-height: 1.5;
+}
+.option-divider {
+  height: 1px;
+  background: var(--line);
+  margin: 14px 0;
+}
+
+/* ACCESOS NAVEGACIÓN EN AJUSTES */
+.settings-nav-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.settings-nav-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  box-shadow: var(--shadow-sm);
+  width: 100%;
+}
+.settings-nav-card:active {
+  background: #f8f9fc;
+}
+.s-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+.settings-nav-card strong {
+  display: block;
+  font-size: 14px;
+  color: var(--ink);
+}
+.settings-nav-card span {
+  font-size: 11.5px;
+  color: var(--sub);
+}
+.s-arrow {
+  margin-left: auto;
+  font-size: 18px;
+  color: var(--sub);
+  font-weight: 700;
+}
+
+.danger-text {
+  color: var(--danger) !important;
+  border-color: #fecdd3 !important;
+}
+
+.weight-tip-box {
+  font-size: 11.5px;
+  color: #3b82f6;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  padding: 9px 12px;
+  border-radius: 10px;
+  margin-bottom: 14px;
+  line-height: 1.45;
+}
+

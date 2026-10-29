@@ -1,9 +1,9 @@
-/* MiCalorías 2.0 — Diario de alimentación y proteínas 100% local.
+/* MiCalorías 3.0 — Diario de alimentación, proteínas, peso y gasto calórico 100% local.
    Sin servidores externos, sin cuentas, compatible con Safari iOS y GitHub Pages. */
 'use strict';
 
 const DB_NAME = 'micalorias-local-v1';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 const MEALS = [
   { id: 'desayuno', title: 'Desayuno', emoji: '☀️' },
@@ -46,6 +46,14 @@ const dateText = date => {
   }
 };
 
+const dateShort = date => {
+  try {
+    return new Intl.DateTimeFormat('es-PE', { day: 'numeric', month: 'short' }).format(new Date(`${date}T12:00:00`));
+  } catch {
+    return date;
+  }
+};
+
 const offsetDate = (date, days) => {
   const d = new Date(`${date}T12:00:00`);
   d.setDate(d.getDate() + days);
@@ -56,14 +64,19 @@ const makeId = () => (typeof crypto !== 'undefined' && crypto.randomUUID)
   ? crypto.randomUUID()
   : `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
+// =============================================================
 // ESTADO GLOBAL
+// =============================================================
 let db;
 let entries = [];
 let foods = [];
 let settings = {};
+let weightEntries = [];
+
 let currentDate = todayISO();
 let currentView = 'diario';
 let foodFilter = 'all'; // 'all' | 'favs'
+let weightChartPeriod = '4w'; // '4w' | '3m' | 'all'
 let toastTimeout;
 
 // Estado de flujos
@@ -73,10 +86,12 @@ let selectedFoodForQuickAdd = null;
 let activeFoodForDirectUse = null;
 let editingEntryId = null;
 let editingFoodId = null;
+let editingWeightId = null;
+let activeScenario = 'maintain'; // 'maintain' | 'loss' | 'gain'
 let isSaving = false;
 
 // -------------------------------------------------------------
-// 1. BASE DE DATOS LOCAL (IndexedDB con migración a v2)
+// 1. BASE DE DATOS LOCAL (IndexedDB con migración a v3)
 // -------------------------------------------------------------
 function openDatabase() {
   return new Promise((resolve, reject) => {
@@ -92,6 +107,10 @@ function openDatabase() {
       }
       if (!database.objectStoreNames.contains('settings')) {
         database.createObjectStore('settings', { keyPath: 'key' });
+      }
+      if (!database.objectStoreNames.contains('weightEntries')) {
+        const weightStore = database.createObjectStore('weightEntries', { keyPath: 'id' });
+        weightStore.createIndex('date', 'date', { unique: false });
       }
     };
     req.onsuccess = () => resolve(req.result);
@@ -121,14 +140,16 @@ function mutate(table, method, value) {
 }
 
 async function refresh() {
-  const [newEntries, newFoods, newSettings] = await Promise.all([
+  const [newEntries, newFoods, newSettings, newWeights] = await Promise.all([
     getAll('entries'),
     getAll('foods'),
-    getAll('settings')
+    getAll('settings'),
+    getAll('weightEntries')
   ]);
   entries = newEntries || [];
   foods = newFoods || [];
   settings = Object.fromEntries((newSettings || []).map(s => [s.key, s.value]));
+  weightEntries = newWeights || [];
   renderAll();
 }
 
@@ -199,11 +220,141 @@ function dayEntries(day) {
 }
 
 // -------------------------------------------------------------
-// 3. RENDERIZADO GENERAL
+// 3. CALCULADORA DE CALORÍAS (MIFFLIN-ST JEOR & TDEE)
+// -------------------------------------------------------------
+function calculateMifflinStJeor({ weightKg, heightCm, ageYears, physiologicalParam, activityMultiplier }) {
+  const w = Number(weightKg);
+  const h = Number(heightCm);
+  const a = Number(ageYears);
+  const factor = Number(activityMultiplier);
+
+  if (!Number.isFinite(w) || w <= 0 || w > 400) {
+    throw new Error('Introduce un peso válido entre 20 y 400 kg');
+  }
+  if (!Number.isFinite(h) || h <= 0 || h > 260) {
+    throw new Error('Introduce una estatura válida entre 80 y 260 cm');
+  }
+  if (!Number.isFinite(a) || a <= 0 || a > 120) {
+    throw new Error('Introduce una edad válida entre 15 y 120 años');
+  }
+  if (!Number.isFinite(factor) || factor < 1.0 || factor > 2.5) {
+    throw new Error('Selecciona un nivel de actividad válido');
+  }
+
+  // Base común: 10 * peso + 6.25 * estatura - 5 * edad
+  const base = (10 * w) + (6.25 * h) - (5 * a);
+
+  const rmrMale = Math.round(base + 5);
+  const rmrFemale = Math.round(base - 161);
+  const tdeeMale = Math.round(rmrMale * factor);
+  const tdeeFemale = Math.round(rmrFemale * factor);
+
+  if (physiologicalParam === 'male') {
+    return {
+      isRange: false,
+      param: 'male',
+      rmr: rmrMale,
+      tdee: tdeeMale,
+      factor,
+      weightKg: w,
+      heightCm: h,
+      ageYears: a
+    };
+  } else if (physiologicalParam === 'female') {
+    return {
+      isRange: false,
+      param: 'female',
+      rmr: rmrFemale,
+      tdee: tdeeFemale,
+      factor,
+      weightKg: w,
+      heightCm: h,
+      ageYears: a
+    };
+  } else {
+    // Parámetro no especificado: intervalo orientativo
+    const rmrMin = Math.min(rmrMale, rmrFemale);
+    const rmrMax = Math.max(rmrMale, rmrFemale);
+    const tdeeMin = Math.min(tdeeMale, tdeeFemale);
+    const tdeeMax = Math.max(tdeeMale, tdeeFemale);
+    return {
+      isRange: true,
+      param: 'unspecified',
+      rmrMin,
+      rmrMax,
+      tdeeMin,
+      tdeeMax,
+      rmr: Math.round((rmrMin + rmrMax) / 2),
+      tdee: Math.round((tdeeMin + tdeeMax) / 2),
+      factor,
+      weightKg: w,
+      heightCm: h,
+      ageYears: a
+    };
+  }
+}
+
+function calculateScenarios(tdee) {
+  // Escenarios orientativos moderados y conservadores
+  // Déficit moderado (~350 kcal)
+  const loss = Math.max(1200, Math.round(tdee - 350));
+  // Superávit moderado (~350 kcal)
+  const gain = Math.round(tdee + 350);
+  return {
+    maintain: tdee,
+    loss,
+    gain
+  };
+}
+
+// -------------------------------------------------------------
+// 4. GESTIÓN DE PESO CORPORAL ("MI PESO")
+// -------------------------------------------------------------
+function getSortedWeightEntries() {
+  return weightEntries.slice().sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function getLatestWeightEntry() {
+  const sorted = getSortedWeightEntries();
+  return sorted.length ? sorted[sorted.length - 1] : null;
+}
+
+function computeWeightStats() {
+  const sorted = getSortedWeightEntries();
+  if (!sorted.length) {
+    return {
+      latest: null,
+      previous: null,
+      recentDiff: null,
+      totalDiff: null,
+      count: 0
+    };
+  }
+
+  const latest = sorted[sorted.length - 1];
+  const previous = sorted.length >= 2 ? sorted[sorted.length - 2] : null;
+  const first = sorted[0];
+
+  const recentDiff = previous ? Math.round((latest.weight - previous.weight) * 10) / 10 : null;
+  const totalDiff = sorted.length >= 2 ? Math.round((latest.weight - first.weight) * 10) / 10 : null;
+
+  return {
+    latest,
+    previous,
+    recentDiff,
+    totalDiff,
+    count: sorted.length
+  };
+}
+
+// -------------------------------------------------------------
+// 5. RENDERIZADO GENERAL
 // -------------------------------------------------------------
 function renderAll() {
   renderDiary();
   renderFoods();
+  renderWeightView();
+  renderCalculatorView();
   renderHistory();
   renderSettings();
 }
@@ -229,11 +380,15 @@ function renderDiary() {
   $('#day-protein-partial-badge').hidden = !protSummary.isPartial;
   $('#protein-partial-note').hidden = !protSummary.isPartial;
 
-  // Barra de progreso de calorías
+  // Barra de progreso vs. Mantenimiento informativo de Calorías
   const goalKcal = Number(settings.goal || 0);
   const kcalWrap = $('#goal-kcal-wrapper');
+  const maintWrap = $('#maint-ref-wrapper');
+
   if (goalKcal > 0) {
+    // Si existe meta calórica activa: se muestra barra de progreso
     kcalWrap.hidden = false;
+    maintWrap.hidden = true;
     const pct = Math.min(100, Math.round((totalKcal / goalKcal) * 100));
     $('#progress-fill-kcal').style.width = `${pct}%`;
     $('#progress-bar-kcal').setAttribute('aria-valuenow', String(Math.round(totalKcal)));
@@ -244,7 +399,19 @@ function renderDiary() {
       $('#goal-kcal-text').textContent = `${fmt(totalKcal)} / ${fmt(goalKcal)} kcal (${pct}%)`;
     }
   } else {
+    // Si NO existe meta calórica activa: no se muestran barras obligatorias
     kcalWrap.hidden = true;
+    const calcResult = settings.calcResult;
+    if (calcResult && (calcResult.tdee || calcResult.tdeeMin)) {
+      maintWrap.hidden = false;
+      if (calcResult.isRange) {
+        $('#maint-ref-text').textContent = `Mantenimiento estimado: ~${fmt(calcResult.tdeeMin)}–${fmt(calcResult.tdeeMax)} kcal/día`;
+      } else {
+        $('#maint-ref-text').textContent = `Mantenimiento estimado: ~${fmt(calcResult.tdee)} kcal/día`;
+      }
+    } else {
+      maintWrap.hidden = true;
+    }
   }
 
   // Barra de progreso de proteínas
@@ -265,6 +432,35 @@ function renderDiary() {
     protWrap.hidden = true;
   }
 
+  // Accesos rápidos superiores en Hoy
+  const latestWeight = getLatestWeightEntry();
+  if (latestWeight) {
+    $('#shortcut-peso-val').textContent = `${fmt(latestWeight.weight)} kg (${dateShort(latestWeight.date)})`;
+  } else {
+    $('#shortcut-peso-val').textContent = 'Registrar peso';
+  }
+
+  const calcRes = settings.calcResult;
+  if (calcRes && (calcRes.tdee || calcRes.tdeeMin)) {
+    if (calcRes.isRange) {
+      $('#shortcut-calc-val').textContent = `Mant: ${fmt(calcRes.tdeeMin)}–${fmt(calcRes.tdeeMax)} kcal`;
+    } else {
+      $('#shortcut-calc-val').textContent = `Mant: ${fmt(calcRes.tdee)} kcal`;
+    }
+  } else {
+    $('#shortcut-calc-val').textContent = 'Estimar gasto';
+  }
+
+  // Banner de aviso si cambió la estimación por nuevo peso
+  const pending = settings.pendingGoalReview;
+  const banner = $('#calc-update-banner');
+  if (pending && pending.oldGoal && pending.newTdee) {
+    banner.hidden = false;
+    $('#calc-update-banner-text').textContent = `Tu mantenimiento se recalculó a ${fmt(pending.newTdee)} kcal/día con tu peso reciente (${fmt(pending.newWeight)} kg). Tu meta actual sigue en ${fmt(pending.oldGoal)} kcal. ¿Deseas revisarla?`;
+  } else {
+    banner.hidden = true;
+  }
+
   // Renderizado de comidas
   $('#meals-container').innerHTML = MEALS.map(meal => {
     const list = day.filter(e => e.meal === meal.id).sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || ''));
@@ -282,7 +478,6 @@ function renderDiary() {
       const kcalVal = Number.isFinite(e.kcal) ? e.kcal : computeNutrition(e).kcal;
       const protVal = (e.protein !== undefined && e.protein !== null) ? e.protein : computeNutrition(e).protein;
 
-      // Base descriptiva
       let baseTxt = '';
       if (e.baseType === 'portion') {
         baseTxt = `${fmt(e.kcalPerPortion)} kcal${e.proteinPerPortion ? ' · ' + fmt(e.proteinPerPortion) + ' g prot' : ''} / ${esc(e.unit)}`;
@@ -336,7 +531,318 @@ function renderDiary() {
 }
 
 // -------------------------------------------------------------
-// 4. BIBLIOTECA "MIS ALIMENTOS"
+// 6. RENDERIZADO: "MI PESO" Y GRÁFICA SVG
+// -------------------------------------------------------------
+function renderWeightView() {
+  const stats = computeWeightStats();
+  const sorted = getSortedWeightEntries();
+
+  if (stats.latest) {
+    $('#stat-last-weight').textContent = fmt(stats.latest.weight);
+    $('#stat-last-date').textContent = dateText(stats.latest.date);
+  } else {
+    $('#stat-last-weight').textContent = '—';
+    $('#stat-last-date').textContent = 'Sin mediciones';
+  }
+
+  // Cambio reciente
+  const recentEl = $('#stat-diff-recent');
+  if (stats.recentDiff !== null) {
+    const sign = stats.recentDiff > 0 ? '+' : '';
+    recentEl.textContent = `${sign}${fmt(stats.recentDiff)} kg`;
+    recentEl.style.color = stats.recentDiff < 0 ? '#047857' : (stats.recentDiff > 0 ? '#be123c' : 'var(--ink)');
+  } else {
+    recentEl.textContent = '—';
+    recentEl.style.color = 'var(--ink)';
+  }
+
+  // Cambio total
+  const totalEl = $('#stat-diff-total');
+  if (stats.totalDiff !== null) {
+    const sign = stats.totalDiff > 0 ? '+' : '';
+    totalEl.textContent = `${sign}${fmt(stats.totalDiff)} kg`;
+    totalEl.style.color = stats.totalDiff < 0 ? '#047857' : (stats.totalDiff > 0 ? '#be123c' : 'var(--ink)');
+  } else {
+    totalEl.textContent = '—';
+    totalEl.style.color = 'var(--ink)';
+  }
+
+  $('#weight-count-label').textContent = `${sorted.length} medicion${sorted.length === 1 ? '' : 'es'}`;
+
+  // Filtrar según período de gráfica
+  let periodFiltered = sorted.slice();
+  const today = todayISO();
+  if (weightChartPeriod === '4w') {
+    const start = offsetDate(today, -28);
+    periodFiltered = periodFiltered.filter(w => w.date >= start);
+  } else if (weightChartPeriod === '3m') {
+    const start = offsetDate(today, -90);
+    periodFiltered = periodFiltered.filter(w => w.date >= start);
+  }
+
+  renderWeightSvgChart(periodFiltered);
+  renderWeightList(sorted);
+  renderAccessibleWeightTable(sorted);
+}
+
+function renderWeightSvgChart(points) {
+  const svg = $('#weight-svg-chart');
+  const empty = $('#chart-empty-state');
+
+  if (!points || points.length < 2) {
+    svg.innerHTML = '';
+    empty.hidden = false;
+    $('#chart-range-info').textContent = 'Se necesitan al menos 2 mediciones';
+    return;
+  }
+
+  empty.hidden = true;
+  const weights = points.map(p => p.weight);
+  const minW = Math.min(...weights);
+  const maxW = Math.max(...weights);
+  const padding = Math.max(0.8, (maxW - minW) * 0.15);
+  const yMin = minW - padding;
+  const yMax = maxW + padding;
+  const yRange = yMax - yMin;
+
+  const width = 500;
+  const height = 220;
+  const padLeft = 45;
+  const padRight = 30;
+  const padTop = 25;
+  const padBottom = 35;
+  const chartW = width - padLeft - padRight;
+  const chartH = height - padTop - padBottom;
+
+  $('#chart-range-info').textContent = `${points.length} puntos (${dateShort(points[0].date)} — ${dateShort(points[points.length - 1].date)})`;
+
+  // Coordenadas
+  const coords = points.map((p, idx) => {
+    const x = padLeft + (idx / (points.length - 1)) * chartW;
+    const y = padTop + chartH - ((p.weight - yMin) / yRange) * chartH;
+    return { x, y, weight: p.weight, date: p.date };
+  });
+
+  // Líneas de guía horizontal
+  const gridCount = 4;
+  let gridLines = '';
+  for (let i = 0; i <= gridCount; i++) {
+    const yVal = yMin + (yRange / gridCount) * i;
+    const yPos = padTop + chartH - (i / gridCount) * chartH;
+    gridLines += `
+      <line x1="${padLeft}" y1="${yPos}" x2="${width - padRight}" y2="${yPos}" stroke="#edf2f7" stroke-width="1" />
+      <text x="${padLeft - 8}" y="${yPos + 4}" fill="#8c95a8" font-size="10" font-weight="700" text-anchor="end">${fmt(yVal)}</text>
+    `;
+  }
+
+  // Trazado de línea
+  const pathD = coords.reduce((acc, c, idx) => `${acc} ${idx === 0 ? 'M' : 'L'} ${c.x} ${c.y}`, '');
+  // Área bajo la curva
+  const areaD = `${pathD} L ${coords[coords.length - 1].x} ${padTop + chartH} L ${coords[0].x} ${padTop + chartH} Z`;
+
+  // Puntos
+  const circles = coords.map(c => `
+    <g class="chart-point">
+      <circle cx="${c.x}" cy="${c.y}" r="5" fill="#6352d8" stroke="#ffffff" stroke-width="2.5" />
+      <text x="${c.x}" y="${c.y - 9}" fill="#4a3ec6" font-size="10" font-weight="800" text-anchor="middle">${fmt(c.weight)}</text>
+      <text x="${c.x}" y="${height - 12}" fill="#8c95a8" font-size="9.5" font-weight="650" text-anchor="middle">${dateShort(c.date)}</text>
+    </g>
+  `).join('');
+
+  svg.innerHTML = `
+    <defs>
+      <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#6352d8" stop-opacity="0.22" />
+        <stop offset="100%" stop-color="#6352d8" stop-opacity="0.0" />
+      </linearGradient>
+    </defs>
+    ${gridLines}
+    <path d="${areaD}" fill="url(#chartGrad)" />
+    <path d="${pathD}" fill="none" stroke="#6352d8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+    ${circles}
+  `;
+}
+
+function renderAccessibleWeightTable(sorted) {
+  const tbody = $('#accessible-weight-tbody');
+  if (!sorted.length) {
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center">Sin datos registrados</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = sorted.slice().reverse().map((w, idx, arr) => {
+    const prev = arr[idx + 1];
+    let diffTxt = '—';
+    if (prev) {
+      const diff = Math.round((w.weight - prev.weight) * 10) / 10;
+      diffTxt = `${diff > 0 ? '+' : ''}${fmt(diff)} kg`;
+    }
+    return `
+      <tr>
+        <td>${esc(dateText(w.date))}</td>
+        <td><strong>${fmt(w.weight)} kg</strong></td>
+        <td>${diffTxt}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function renderWeightList(sorted) {
+  const container = $('#weights-list-container');
+  if (!sorted.length) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <strong>Aún no has registrado tu peso</strong>
+        Presiona «＋ Registrar peso» para comenzar tu seguimiento histórico.
+      </div>
+    `;
+    return;
+  }
+
+  // Lista en orden inverso (más reciente arriba)
+  const reversed = sorted.slice().reverse();
+
+  container.innerHTML = reversed.map((item, idx) => {
+    const prevItem = reversed[idx + 1];
+    let diffBadge = '';
+    if (prevItem) {
+      const diff = Math.round((item.weight - prevItem.weight) * 10) / 10;
+      if (diff < 0) {
+        diffBadge = `<span class="w-diff-badge down">▼ ${fmt(Math.abs(diff))} kg</span>`;
+      } else if (diff > 0) {
+        diffBadge = `<span class="w-diff-badge up">▲ +${fmt(diff)} kg</span>`;
+      } else {
+        diffBadge = `<span class="w-diff-badge same">= 0 kg</span>`;
+      }
+    }
+
+    const noteTxt = item.note ? `<span class="w-row-note">${esc(item.note)}</span>` : '';
+
+    return `
+      <article class="weight-row-item">
+        <div class="weight-row-left">
+          <span class="w-row-date">${esc(dateText(item.date))}</span>
+          ${noteTxt}
+        </div>
+        <div class="weight-row-right">
+          <span class="w-row-val">${fmt(item.weight)} kg</span>
+          ${diffBadge}
+          <button type="button" class="icon-action" data-edit-weight="${esc(item.id)}" aria-label="Editar peso del ${esc(item.date)}">✎</button>
+          <button type="button" class="icon-action" data-delete-weight="${esc(item.id)}" aria-label="Eliminar registro">×</button>
+        </div>
+      </article>
+    `;
+  }).join('');
+}
+
+// -------------------------------------------------------------
+// 7. RENDERIZADO: CALCULADORA DE CALORÍAS
+// -------------------------------------------------------------
+function renderCalculatorView() {
+  const profile = settings.calcProfile;
+  if (profile) {
+    if (profile.weight) $('#calc-weight').value = profile.weight;
+    if (profile.height) $('#calc-height').value = profile.height;
+    if (profile.age) $('#calc-age').value = profile.age;
+    if (profile.activity) $('#calc-activity').value = profile.activity;
+
+    const param = profile.param || 'male';
+    document.querySelectorAll('input[name="calc-param"]').forEach(r => {
+      r.checked = (r.value === param);
+    });
+  }
+
+  const res = settings.calcResult;
+  const resCard = $('#calc-results-card');
+  if (res && (res.tdee || res.tdeeMin)) {
+    resCard.hidden = false;
+    $('#calc-res-date').textContent = res.date ? dateShort(res.date) : 'Estimación activa';
+
+    if (res.isRange) {
+      $('#calc-res-rmr').textContent = `${fmt(res.rmrMin)}–${fmt(res.rmrMax)} kcal`;
+      $('#calc-res-tdee').textContent = `${fmt(res.tdeeMin)}–${fmt(res.tdeeMax)} kcal`;
+    } else {
+      $('#calc-res-rmr').textContent = `${fmt(res.rmr)} kcal`;
+      $('#calc-res-tdee').textContent = `${fmt(res.tdee)} kcal`;
+    }
+
+    const actMap = {
+      '1.20': 'Sedentario (x1.20)',
+      '1.375': 'Actividad ligera (x1.375)',
+      '1.55': 'Actividad moderada (x1.55)',
+      '1.725': 'Actividad alta (x1.725)',
+      '1.90': 'Actividad muy alta (x1.90)'
+    };
+
+    const paramTxt = res.param === 'male' ? 'Parámetro masculino' : (res.param === 'female' ? 'Parámetro femenino' : 'Sin parámetro específico');
+    $('#calc-meta-details').textContent = `Basado en ${fmt(res.weight)} kg · ${fmt(res.height)} cm · ${fmt(res.age)} años · ${actMap[String(res.factor)] || 'Factor ' + res.factor} · ${paramTxt}`;
+
+    // Escenarios orientativos
+    const baseTdee = res.tdee || Math.round((res.tdeeMin + res.tdeeMax) / 2);
+    const scen = calculateScenarios(baseTdee);
+    $('#scen-val-maintain').textContent = `${fmt(scen.maintain)} kcal`;
+    $('#scen-val-loss').textContent = `${fmt(scen.loss)} kcal`;
+    $('#scen-val-gain').textContent = `${fmt(scen.gain)} kcal`;
+
+    // Resaltar escenario activo
+    document.querySelectorAll('.scenario-item').forEach(el => {
+      el.classList.toggle('active', el.dataset.scenario === activeScenario);
+    });
+  } else {
+    resCard.hidden = true;
+  }
+}
+
+function runCalculator() {
+  const weight = Number($('#calc-weight').value);
+  const height = Number($('#calc-height').value);
+  const age = Number($('#calc-age').value);
+  const param = document.querySelector('input[name="calc-param"]:checked')?.value || 'male';
+  const activity = Number($('#calc-activity').value);
+
+  try {
+    const result = calculateMifflinStJeor({
+      weightKg: weight,
+      heightCm: height,
+      ageYears: age,
+      physiologicalParam: param,
+      activityMultiplier: activity
+    });
+
+    const profileData = {
+      weight,
+      height,
+      age,
+      param,
+      activity: String(activity),
+      updatedAt: new Date().toISOString()
+    };
+
+    const resultData = {
+      ...result,
+      weight,
+      height,
+      age,
+      date: todayISO()
+    };
+
+    // Guardar perfil y resultado en settings de IndexedDB
+    mutate('settings', 'put', { key: 'calcProfile', value: profileData });
+    mutate('settings', 'put', { key: 'calcResult', value: resultData });
+
+    settings.calcProfile = profileData;
+    settings.calcResult = resultData;
+
+    renderCalculatorView();
+    $('#calc-results-card').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    toast('Gasto energético estimado con éxito');
+  } catch (err) {
+    toast(err.message || 'Error en los datos ingresados');
+  }
+}
+
+// -------------------------------------------------------------
+// 8. BIBLIOTECA "MIS ALIMENTOS" Y HISTORIAL
 // -------------------------------------------------------------
 function renderFoods() {
   const query = keyName($('#food-search').value);
@@ -351,7 +857,6 @@ function renderFoods() {
     return matchesQuery && matchesFilter;
   });
 
-  // Ordenar: favoritos primero, luego alfabéticamente
   filtered.sort((a, b) => {
     if (a.favorite !== b.favorite) return a.favorite ? -1 : 1;
     return a.name.localeCompare(b.name, 'es');
@@ -362,7 +867,7 @@ function renderFoods() {
     container.innerHTML = `
       <div class="empty-state">
         <strong>No se encontraron alimentos</strong>
-        ${query ? 'Intenta con otro término de búsqueda o crea uno nuevo.' : 'Presiona “＋ Nuevo alimento” para crear tu biblioteca personal de ingredientes habituales.'}
+        ${query ? 'Intenta con otro término de búsqueda o crea uno nuevo.' : 'Presiona «＋ Nuevo alimento» para crear tu biblioteca personal de ingredientes habituales.'}
       </div>
     `;
     return;
@@ -374,9 +879,7 @@ function renderFoods() {
     const kcalVal = isPortion ? f.kcalPerPortion : f.kcalPer100;
     const protVal = isPortion ? f.proteinPerPortion : f.proteinPer100;
     const unitName = isPortion ? (f.portionUnit || 'porción') : (f.unit || 'g');
-
     const baseTxt = isPortion ? `por ${esc(unitName)}` : `por 100 ${esc(unitName)}`;
-    const gramsTxt = (isPortion && f.portionGrams) ? ` · ${fmt(f.portionGrams)} g` : '';
 
     return `
       <article class="food-card">
@@ -406,9 +909,6 @@ function renderFoods() {
   }).join('');
 }
 
-// -------------------------------------------------------------
-// 5. HISTORIAL DE COMIDAS
-// -------------------------------------------------------------
 function renderHistory() {
   const days = [...new Set(entries.map(e => e.date))].sort().reverse();
   const container = $('#history-container');
@@ -454,19 +954,17 @@ function renderSettings() {
 }
 
 // -------------------------------------------------------------
-// 6. MODAL 1: REGISTRO RÁPIDO DE COMIDA ("AGREGAR COMIDA")
+// 9. FLUJO DE REGISTRO RÁPIDO DE COMIDAS (QUICK ADD)
 // -------------------------------------------------------------
 function openQuickAdd(meal = 'desayuno') {
   stagedMeal = meal;
   stagedItems = [];
   selectedFoodForQuickAdd = null;
 
-  // Actualizar selector de comida
   document.querySelectorAll('.meal-chip').forEach(chip => {
     chip.classList.toggle('active', chip.dataset.mealChoice === stagedMeal);
   });
 
-  // Mostrar tab de biblioteca por defecto
   setQuickAddMode('library');
   $('#quick-search-input').value = '';
   renderQuickFoodsList();
@@ -492,7 +990,6 @@ function renderQuickFoodsList() {
     list = list.filter(f => keyName(f.name).includes(query) || keyName(f.brand || '').includes(query));
   }
 
-  // Favoritos primero
   list.sort((a, b) => {
     if (a.favorite !== b.favorite) return a.favorite ? -1 : 1;
     return a.name.localeCompare(b.name, 'es');
@@ -544,11 +1041,9 @@ function selectFoodForQuickAdd(food) {
   $('#q-selected-meta').textContent = `${fmt(kcalBase)} kcal${protBase !== null && protBase !== undefined ? ' · ' + fmt(protBase) + ' g prot' : ''} por ${unit}`;
   $('#q-selected-unit-label').textContent = unit;
 
-  // Cantidad sugerida
   const defAmount = food.defaultAmount || (isPortion ? 1 : 100);
   $('#q-amount-input').value = defAmount;
 
-  // Chips de cantidad rápida
   renderQuickAmountChips(isPortion, unit);
   updateQuickPreview();
 
@@ -654,7 +1149,7 @@ function addStagedItemFromManual() {
     const protRaw = $('#manual-w-protein').value.trim();
 
     if (!Number.isFinite(amount) || amount <= 0 || !Number.isFinite(kcalRaw) || kcalRaw < 0) {
-      toast('Verifica la cantidad y las calorías por 100g/ml');
+      toast('Verifica la cantidad y las calorías');
       return;
     }
     kcalPer100 = kcalRaw;
@@ -711,12 +1206,9 @@ function addStagedItemFromManual() {
   };
 
   stagedItems.push(staged);
-
-  // Limpiar formulario manual
   $('#quick-add-manual-form').reset();
   $('#manual-save-to-library').checked = true;
   updateManualPreview();
-
   renderStagedSection();
   toast(`“${staged.name}” añadido a la lista`);
 }
@@ -788,12 +1280,10 @@ async function saveEntireMeal() {
 
   try {
     for (const item of stagedItems) {
-      // Guardar entrada en el diario
       const entryRecord = { ...item };
       delete entryRecord.saveToLibrary;
       await mutate('entries', 'put', entryRecord);
 
-      // Si el usuario marcó guardar en su biblioteca de Mis alimentos
       if (item.saveToLibrary) {
         const existing = foods.find(f => keyName(f.name) === keyName(item.name));
         const foodRecord = {
@@ -820,10 +1310,10 @@ async function saveEntireMeal() {
     $('#quick-add-dialog').close();
     await refresh();
     showView('diario');
-    toast('¡Comida registrada exitosamente!');
+    toast('¡Comida guardada exitosamente!');
   } catch (error) {
     console.error(error);
-    toast('Error al guardar la comida en el dispositivo');
+    toast('Error al guardar la comida');
   } finally {
     isSaving = false;
     saveBtn.disabled = false;
@@ -832,7 +1322,195 @@ async function saveEntireMeal() {
 }
 
 // -------------------------------------------------------------
-// 7. MODAL 2: CREAR / EDITAR ALIMENTO EN "MIS ALIMENTOS"
+// 10. GESTIÓN DE PESO (CREAR, EDITAR, ELIMINAR, RECALCULAR)
+// -------------------------------------------------------------
+function openWeightDialog(weightItem = null) {
+  editingWeightId = weightItem?.id || null;
+  $('#weight-form').reset();
+  $('#weight-dialog-title').textContent = weightItem ? 'Editar peso' : 'Registrar peso';
+  $('#w-date-input').value = weightItem ? weightItem.date : todayISO();
+  $('#w-val-input').value = weightItem ? weightItem.weight : '';
+  $('#w-note-input').value = weightItem ? (weightItem.note || '') : '';
+  $('#weight-dialog').showModal();
+}
+
+async function saveWeightEntry(event) {
+  event.preventDefault();
+  const date = $('#w-date-input').value;
+  const weight = Number($('#w-val-input').value);
+  const note = $('#w-note-input').value.trim();
+
+  if (!validDate(date)) {
+    toast('Fecha inválida');
+    return;
+  }
+  if (!Number.isFinite(weight) || weight < 20 || weight > 400) {
+    toast('Introduce un peso válido entre 20 y 400 kg');
+    return;
+  }
+
+  // Prevenir duplicado el mismo día: si ya existe una entrada para esta fecha y no es la que editamos, actualizarla
+  const existingSameDate = weightEntries.find(w => w.date === date && w.id !== editingWeightId);
+  const targetId = editingWeightId || (existingSameDate ? existingSameDate.id : makeId());
+
+  const entry = {
+    id: targetId,
+    date,
+    weight,
+    note,
+    createdAt: existingSameDate?.createdAt || new Date().toISOString()
+  };
+
+  try {
+    await mutate('weightEntries', 'put', entry);
+    $('#weight-dialog').close();
+
+    // Actualizar en memoria temporalmente para verificar si es la medición más reciente
+    const updatedWeights = weightEntries.filter(w => w.id !== targetId).concat(entry);
+    const sorted = updatedWeights.slice().sort((a, b) => a.date.localeCompare(b.date));
+    const isLatest = (sorted[sorted.length - 1].id === targetId);
+
+    // Si es la medición más reciente y existe un perfil de cálculo, actualizar estimación
+    if (isLatest && settings.calcProfile) {
+      try {
+        const prof = settings.calcProfile;
+        const newResult = calculateMifflinStJeor({
+          weightKg: weight,
+          heightCm: prof.height,
+          ageYears: prof.age,
+          physiologicalParam: prof.param,
+          activityMultiplier: Number(prof.activity)
+        });
+
+        prof.weight = weight;
+        prof.updatedAt = new Date().toISOString();
+        const updatedResultData = {
+          ...newResult,
+          weight,
+          height: prof.height,
+          age: prof.age,
+          date: todayISO()
+        };
+
+        await mutate('settings', 'put', { key: 'calcProfile', value: prof });
+        await mutate('settings', 'put', { key: 'calcResult', value: updatedResultData });
+
+        // Si existe una meta activa que difiere de la nueva estimación, marcar sugerencia de revisión
+        if (settings.goal > 0 && Math.abs(settings.goal - updatedResultData.tdee) >= 20) {
+          const pending = {
+            oldGoal: settings.goal,
+            newTdee: updatedResultData.tdee,
+            newWeight: weight
+          };
+          await mutate('settings', 'put', { key: 'pendingGoalReview', value: pending });
+        }
+      } catch (errCalc) {
+        console.warn('No se pudo recalcular automáticamente el gasto:', errCalc);
+      }
+    }
+
+    await refresh();
+    toast(existingSameDate && !editingWeightId ? 'Medición de esta fecha actualizada' : 'Peso guardado');
+  } catch (err) {
+    console.error(err);
+    toast('Error al guardar el peso');
+  }
+}
+
+async function deleteWeightEntry(id) {
+  const item = weightEntries.find(w => w.id === id);
+  if (!item) return;
+  if (!confirm(`¿Eliminar el registro de peso de ${item.weight} kg (${dateText(item.date)})?`)) return;
+
+  try {
+    await mutate('weightEntries', 'delete', id);
+    await refresh();
+    toast('Registro de peso eliminado');
+  } catch (err) {
+    console.error(err);
+    toast('No se pudo eliminar');
+  }
+}
+
+// -------------------------------------------------------------
+// 11. FLUJO DE DECISIÓN DE LA CALCULADORA (OPCIÓN A vs OPCIÓN B)
+// -------------------------------------------------------------
+function selectScenario(scenario) {
+  activeScenario = scenario;
+  document.querySelectorAll('.scenario-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.scenario === scenario);
+  });
+}
+
+function handleOptionA() {
+  if (!settings.calcResult) {
+    toast('Primero realiza un cálculo');
+    return;
+  }
+  // Opción A: Solo guardar estimación sin crear meta activa
+  showView('diario');
+  toast('Estimación guardada como referencia informativa en Hoy');
+}
+
+function handleOptionB() {
+  if (!settings.calcResult) {
+    toast('Primero realiza un cálculo');
+    return;
+  }
+
+  const baseTdee = settings.calcResult.tdee || Math.round((settings.calcResult.tdeeMin + settings.calcResult.tdeeMax) / 2);
+  const scen = calculateScenarios(baseTdee);
+  const proposed = scen[activeScenario] || baseTdee;
+
+  $('#goal-confirm-input').value = proposed;
+  $('#goal-preview-display').textContent = `${fmt(proposed)} kcal`;
+  $('#goal-confirm-dialog').showModal();
+}
+
+async function confirmSetGoal(event) {
+  event.preventDefault();
+  const val = Number($('#goal-confirm-input').value);
+  if (!Number.isFinite(val) || val < 500 || val > 15000) {
+    toast('Introduce una meta válida entre 500 y 15 000 kcal');
+    return;
+  }
+
+  try {
+    await mutate('settings', 'put', { key: 'goal', value: val });
+    // Limpiar aviso pendiente de revisión si existía
+    if (settings.pendingGoalReview) {
+      await mutate('settings', 'put', { key: 'pendingGoalReview', value: null });
+    }
+    $('#goal-confirm-dialog').close();
+    await refresh();
+    showView('diario');
+    toast(`Meta de ${fmt(val)} kcal activada en Hoy`);
+  } catch (err) {
+    console.error(err);
+    toast('Error al guardar la meta');
+  }
+}
+
+async function clearCalorieGoal() {
+  if (!confirm('¿Quitar tu meta calórica activa?\n\nTu diario volverá a mostrar solo el total consumido y la estimación de mantenimiento como referencia, sin barras de progreso.')) {
+    return;
+  }
+
+  try {
+    await mutate('settings', 'put', { key: 'goal', value: null });
+    if (settings.pendingGoalReview) {
+      await mutate('settings', 'put', { key: 'pendingGoalReview', value: null });
+    }
+    await refresh();
+    toast('Meta calórica quitada (modo solo informativo)');
+  } catch (err) {
+    console.error(err);
+    toast('No se pudo quitar la meta');
+  }
+}
+
+// -------------------------------------------------------------
+// 12. CRUD DE ALIMENTOS Y DIARIO (CONSERVADO DE V2)
 // -------------------------------------------------------------
 function openFoodEditor(food = null) {
   editingFoodId = food?.id || null;
@@ -843,8 +1521,9 @@ function openFoodEditor(food = null) {
   $('#f-name').value = food?.name || '';
   $('#f-brand').value = food?.brand || '';
 
-  const radios = document.querySelectorAll('input[name="f-base-type"]');
-  radios.forEach(r => { r.checked = isPortion ? (r.value === 'portion') : (r.value === 'weight_volume'); });
+  document.querySelectorAll('input[name="f-base-type"]').forEach(r => {
+    r.checked = isPortion ? (r.value === 'portion') : (r.value === 'weight_volume');
+  });
 
   $('#f-fields-weight').hidden = isPortion;
   $('#f-fields-portion').hidden = !isPortion;
@@ -900,7 +1579,7 @@ async function saveFoodItem(event) {
   } else {
     portionUnit = $('#f-portion-unit').value.trim();
     if (!portionUnit) {
-      toast('Introduce el nombre de la unidad o porción (ej.: scoop, lata, unidad)');
+      toast('Introduce el nombre de la unidad o porción (ej.: scoop, lata)');
       return;
     }
     const def = Number($('#f-default-amount-p').value);
@@ -943,10 +1622,10 @@ async function saveFoodItem(event) {
     await mutate('foods', 'put', record);
     $('#food-dialog').close();
     await refresh();
-    toast(editingFoodId ? 'Alimento actualizado' : 'Alimento guardado en tu biblioteca');
+    toast(editingFoodId ? 'Alimento actualizado' : 'Alimento guardado');
   } catch (err) {
     console.error(err);
-    toast('No se pudo guardar el alimento');
+    toast('No se pudo guardar');
   }
 }
 
@@ -981,16 +1660,13 @@ async function deleteFood(id) {
   try {
     await mutate('foods', 'delete', id);
     await refresh();
-    toast('Alimento eliminado de la biblioteca');
+    toast('Alimento eliminado');
   } catch (err) {
     console.error(err);
     toast('No se pudo eliminar');
   }
 }
 
-// -------------------------------------------------------------
-// 8. MODAL 4: USAR ALIMENTO DIRECTO DESDE MIS ALIMENTOS
-// -------------------------------------------------------------
 function openDirectUseFood(food) {
   activeFoodForDirectUse = food;
   const isPortion = food.baseType === 'portion';
@@ -1002,15 +1678,12 @@ function openDirectUseFood(food) {
   $('#u-food-meta').textContent = `${fmt(kcal)} kcal${prot ? ' · ' + fmt(prot) + ' g prot' : ''} por ${isPortion ? unit : '100 ' + unit}`;
   $('#u-unit-label').textContent = unit;
 
-  // Cantidad por defecto
   const defAmount = food.defaultAmount || (isPortion ? 1 : 100);
   $('#u-amount-input').value = defAmount;
 
-  // Selector de comida según hora
   const h = new Date().getHours();
   $('#u-meal-select').value = h < 11 ? 'desayuno' : h < 16 ? 'almuerzo' : 'cena';
 
-  // Chips
   const chipsContainer = $('#u-amount-chips');
   const values = isPortion ? [0.5, 1, 1.5, 2, 3] : (unit === 'ml' ? [100, 150, 200, 250, 300] : [50, 100, 150, 200, 250]);
   chipsContainer.innerHTML = values.map(v => `
@@ -1091,9 +1764,6 @@ async function confirmDirectUseFood(event) {
   }
 }
 
-// -------------------------------------------------------------
-// 9. MODAL 3: EDITAR INGREDIENTE YA GUARDADO EN EL DIARIO
-// -------------------------------------------------------------
 function openEditEntry(id) {
   const e = entries.find(x => x.id === id);
   if (!e) return;
@@ -1221,20 +1891,20 @@ async function deleteEntry(id) {
 }
 
 // -------------------------------------------------------------
-// 10. AJUSTES (OBJETIVOS Y RESPALDOS JSON COMPATIBLES V1 Y V2)
+// 13. AJUSTES (OBJETIVOS Y RESPALDOS COMPATIBLES V1, V2 Y V3)
 // -------------------------------------------------------------
 async function saveGoals() {
   const rawKcal = $('#goal-input').value.trim();
   const valKcal = rawKcal === '' ? null : Number(rawKcal);
   if (valKcal !== null && (!Number.isFinite(valKcal) || valKcal < 0 || valKcal > 20000)) {
-    toast('Introduce un objetivo de calorías entre 0 y 20 000');
+    toast('Introduce una meta de calorías entre 0 y 20 000');
     return;
   }
 
   const rawProt = $('#protein-goal-input').value.trim();
   const valProt = rawProt === '' ? null : Number(rawProt);
   if (valProt !== null && (!Number.isFinite(valProt) || valProt < 0 || valProt > 1000)) {
-    toast('Introduce un objetivo de proteínas entre 0 y 1 000');
+    toast('Introduce una meta de proteínas entre 0 y 1 000');
     return;
   }
 
@@ -1242,20 +1912,21 @@ async function saveGoals() {
     await mutate('settings', 'put', { key: 'goal', value: valKcal });
     await mutate('settings', 'put', { key: 'proteinGoal', value: valProt });
     await refresh();
-    toast('Objetivos guardados');
+    toast('Metas guardadas');
   } catch (err) {
     console.error(err);
-    toast('No se pudieron guardar los objetivos');
+    toast('No se pudieron guardar las metas');
   }
 }
 
 function getExportData() {
   return {
     app: 'MiCalorías',
-    schemaVersion: 2,
+    schemaVersion: 3,
     exportedAt: new Date().toISOString(),
     entries,
     foods,
+    weightEntries,
     settings: Object.entries(settings).map(([key, value]) => ({ key, value }))
   };
 }
@@ -1292,7 +1963,7 @@ async function exportData() {
 }
 
 function validateAndMigrateImport(json) {
-  if (!json || json.app !== 'MiCalorías' || ![1, 2].includes(json.schemaVersion) || !Array.isArray(json.entries) || !Array.isArray(json.foods) || !Array.isArray(json.settings)) {
+  if (!json || json.app !== 'MiCalorías' || ![1, 2, 3].includes(json.schemaVersion) || !Array.isArray(json.entries) || !Array.isArray(json.foods) || !Array.isArray(json.settings)) {
     throw new Error('El archivo no es un respaldo compatible de MiCalorías');
   }
 
@@ -1300,11 +1971,12 @@ function validateAndMigrateImport(json) {
     throw new Error('El archivo contiene demasiados registros');
   }
 
-  const isV1 = json.schemaVersion === 1;
   const migratedEntries = [];
   const migratedFoods = [];
+  const migratedWeights = [];
   const seenEntries = new Set();
   const seenFoods = new Set();
+  const seenWeights = new Set();
 
   for (const e of json.entries) {
     if (!e || typeof e.id !== 'string' || e.id.length > 150 || !validDate(e.date) || !MEALS.some(m => m.id === e.meal) || typeof e.name !== 'string' || !e.name.trim() || e.name.length > 120 || !Number.isFinite(e.amount) || e.amount <= 0 || seenEntries.has(e.id)) {
@@ -1312,7 +1984,6 @@ function validateAndMigrateImport(json) {
     }
     seenEntries.add(e.id);
 
-    // Compatibilidad v1 -> v2
     const baseType = e.baseType || 'weight_volume';
     const computed = computeNutrition({
       amount: e.amount,
@@ -1367,30 +2038,46 @@ function validateAndMigrateImport(json) {
     });
   }
 
+  if (Array.isArray(json.weightEntries)) {
+    for (const w of json.weightEntries) {
+      if (!w || typeof w.id !== 'string' || !validDate(w.date) || !Number.isFinite(w.weight) || w.weight <= 0 || seenWeights.has(w.id)) {
+        continue;
+      }
+      seenWeights.add(w.id);
+      migratedWeights.push({
+        id: w.id,
+        date: w.date,
+        weight: Number(w.weight),
+        note: w.note || '',
+        createdAt: w.createdAt || new Date().toISOString()
+      });
+    }
+  }
+
   const seenSettings = new Set();
   const migratedSettings = [];
   for (const s of json.settings) {
-    if (!s || !['goal', 'proteinGoal'].includes(s.key) || seenSettings.has(s.key)) continue;
+    if (!s || seenSettings.has(s.key)) continue;
     seenSettings.add(s.key);
-    if (s.value === null || (Number.isFinite(s.value) && s.value >= 0 && s.value <= 20000)) {
-      migratedSettings.push(s);
-    }
+    migratedSettings.push(s);
   }
 
   return {
     entries: migratedEntries,
     foods: migratedFoods,
+    weightEntries: migratedWeights,
     settings: migratedSettings
   };
 }
 
 function importTransaction(data) {
   return new Promise((resolve, reject) => {
-    const tx = db.transaction(['entries', 'foods', 'settings'], 'readwrite');
-    for (const name of ['entries', 'foods', 'settings']) tx.objectStore(name).clear();
+    const tx = db.transaction(['entries', 'foods', 'settings', 'weightEntries'], 'readwrite');
+    for (const name of ['entries', 'foods', 'settings', 'weightEntries']) tx.objectStore(name).clear();
     for (const e of data.entries) tx.objectStore('entries').put(e);
     for (const f of data.foods) tx.objectStore('foods').put(f);
     for (const s of data.settings) tx.objectStore('settings').put(s);
+    for (const w of data.weightEntries) tx.objectStore('weightEntries').put(w);
     tx.oncomplete = resolve;
     tx.onerror = () => reject(tx.error);
     tx.onabort = () => reject(tx.error);
@@ -1407,8 +2094,8 @@ async function importData(event) {
     const parsed = JSON.parse(await file.text());
     const migrated = validateAndMigrateImport(parsed);
 
-    const versionNote = parsed.schemaVersion === 1 ? ' (migrado automáticamente desde v1.0)' : '';
-    if (!confirm(`Este respaldo contiene ${migrated.entries.length} registros y ${migrated.foods.length} alimentos${versionNote}.\n\n¿Sustituir TODOS los datos actuales en este iPhone? Esta acción no se puede deshacer.`)) {
+    const versionNote = parsed.schemaVersion < 3 ? ` (migrado desde v${parsed.schemaVersion}.0)` : '';
+    if (!confirm(`Este respaldo contiene:\n- ${migrated.entries.length} comidas registradas\n- ${migrated.foods.length} alimentos en biblioteca\n- ${migrated.weightEntries.length} mediciones de peso${versionNote}\n\n¿Sustituir TODOS los datos actuales en este iPhone? Esta acción no se puede deshacer.`)) {
       return;
     }
 
@@ -1424,7 +2111,7 @@ async function importData(event) {
 }
 
 // -------------------------------------------------------------
-// 11. PERSISTENCIA Y EVENTOS
+// 14. PERSISTENCIA Y NAVEGACIÓN
 // -------------------------------------------------------------
 async function checkStorage() {
   try {
@@ -1452,17 +2139,21 @@ async function requestPersistence() {
 }
 
 function showView(view) {
-  if (!['diario', 'alimentos', 'historial', 'ajustes'].includes(view)) return;
+  const allowed = ['diario', 'alimentos', 'peso', 'calculadora', 'historial', 'ajustes'];
+  if (!allowed.includes(view)) return;
   currentView = view;
+
   document.querySelectorAll('.view').forEach(el => {
     el.hidden = el.id !== `view-${view}`;
   });
+
   document.querySelectorAll('.nav-item').forEach(el => {
     const active = el.dataset.view === view;
     el.classList.toggle('active', active);
     if (active) el.setAttribute('aria-current', 'page');
     else el.removeAttribute('aria-current');
   });
+
   window.scrollTo({ top: 0, behavior: 'auto' });
 }
 
@@ -1475,10 +2166,10 @@ function toast(message) {
 }
 
 // -------------------------------------------------------------
-// 12. VINCULACIÓN DE EVENTOS DEL DOM
+// 15. VINCULACIÓN DE EVENTOS DEL DOM
 // -------------------------------------------------------------
 function attachEvents() {
-  // Navegación
+  // Navegación principal inferior
   document.querySelectorAll('[data-view]').forEach(button => {
     button.addEventListener('click', () => showView(button.dataset.view));
   });
@@ -1486,6 +2177,21 @@ function attachEvents() {
   $('#nav-btn-add').addEventListener('click', () => {
     const h = new Date().getHours();
     openQuickAdd(h < 11 ? 'desayuno' : h < 16 ? 'almuerzo' : 'cena');
+  });
+
+  // Accesos rápidos de Hoy
+  $('#btn-shortcut-peso').addEventListener('click', () => showView('peso'));
+  $('#btn-shortcut-calc').addEventListener('click', () => showView('calculadora'));
+
+  // Banner de actualización de estimación
+  $('#btn-review-goal-banner').addEventListener('click', () => {
+    handleOptionB();
+  });
+  $('#btn-dismiss-goal-banner').addEventListener('click', async () => {
+    await mutate('settings', 'put', { key: 'pendingGoalReview', value: null });
+    settings.pendingGoalReview = null;
+    $('#calc-update-banner').hidden = true;
+    toast('Aviso descartado (meta mantenida)');
   });
 
   // Diario: navegación por fecha
@@ -1499,28 +2205,20 @@ function attachEvents() {
     }
   });
 
-  // Botón registrar comida en pantalla principal
   $('#btn-quick-add-main').addEventListener('click', () => {
     const h = new Date().getHours();
     openQuickAdd(h < 11 ? 'desayuno' : h < 16 ? 'almuerzo' : 'cena');
   });
 
-  // Delegación de eventos en las comidas del diario
   $('#meals-container').addEventListener('click', event => {
     const btn = event.target.closest('button');
     if (!btn) return;
-    if (btn.dataset.addMeal) {
-      openQuickAdd(btn.dataset.addMeal);
-    }
-    if (btn.dataset.editEntry) {
-      openEditEntry(btn.dataset.editEntry);
-    }
-    if (btn.dataset.deleteEntry) {
-      deleteEntry(btn.dataset.deleteEntry);
-    }
+    if (btn.dataset.addMeal) openQuickAdd(btn.dataset.addMeal);
+    if (btn.dataset.editEntry) openEditEntry(btn.dataset.editEntry);
+    if (btn.dataset.deleteEntry) deleteEntry(btn.dataset.deleteEntry);
   });
 
-  // Delegación en Historial
+  // Historial de comidas
   $('#history-container').addEventListener('click', event => {
     const btn = event.target.closest('[data-open-date]');
     if (btn) {
@@ -1545,7 +2243,6 @@ function attachEvents() {
     renderFoods();
   });
 
-  // Delegación en tarjetas de Mis alimentos
   $('#foods-container').addEventListener('click', event => {
     const btn = event.target.closest('button');
     if (!btn) return;
@@ -1553,27 +2250,19 @@ function attachEvents() {
       const f = foods.find(x => x.id === btn.dataset.useFoodDirect);
       if (f) openDirectUseFood(f);
     }
-    if (btn.dataset.toggleFav) {
-      toggleFoodFavorite(btn.dataset.toggleFav);
-    }
-    if (btn.dataset.duplicateFood) {
-      duplicateFood(btn.dataset.duplicateFood);
-    }
+    if (btn.dataset.toggleFav) toggleFoodFavorite(btn.dataset.toggleFav);
+    if (btn.dataset.duplicateFood) duplicateFood(btn.dataset.duplicateFood);
     if (btn.dataset.editFood) {
       const f = foods.find(x => x.id === btn.dataset.editFood);
       if (f) openFoodEditor(f);
     }
-    if (btn.dataset.deleteFood) {
-      deleteFood(btn.dataset.deleteFood);
-    }
+    if (btn.dataset.deleteFood) deleteFood(btn.dataset.deleteFood);
   });
 
-  // Botón crear alimento en biblioteca
   $('#btn-create-food').addEventListener('click', () => openFoodEditor());
   $('#btn-close-food-dialog').addEventListener('click', () => $('#food-dialog').close());
   $('#food-form').addEventListener('submit', saveFoodItem);
 
-  // Toggle de base en Food Editor
   document.querySelectorAll('input[name="f-base-type"]').forEach(radio => {
     radio.addEventListener('change', event => {
       const isPortion = event.target.value === 'portion';
@@ -1582,7 +2271,79 @@ function attachEvents() {
     });
   });
 
-  // Quick Add Modal: botones y tabs
+  // Eventos de Peso (Mi peso)
+  $('#btn-add-weight').addEventListener('click', () => openWeightDialog());
+  $('#btn-close-weight-dialog').addEventListener('click', () => $('#weight-dialog').close());
+  $('#weight-form').addEventListener('submit', saveWeightEntry);
+
+  $('#weights-list-container').addEventListener('click', event => {
+    const btn = event.target.closest('button');
+    if (!btn) return;
+    if (btn.dataset.editWeight) {
+      const item = weightEntries.find(w => w.id === btn.dataset.editWeight);
+      if (item) openWeightDialog(item);
+    }
+    if (btn.dataset.deleteWeight) {
+      deleteWeightEntry(btn.dataset.deleteWeight);
+    }
+  });
+
+  document.querySelectorAll('[data-chart-period]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      weightChartPeriod = btn.dataset.chartPeriod;
+      document.querySelectorAll('[data-chart-period]').forEach(b => b.classList.toggle('active', b === btn));
+      renderWeightView();
+    });
+  });
+
+  $('#btn-toggle-accessible-table').addEventListener('click', () => {
+    const wrap = $('#accessible-weight-table-wrap');
+    wrap.hidden = !wrap.hidden;
+    $('#btn-toggle-accessible-table').textContent = wrap.hidden
+      ? 'Ver tabla de datos accesible'
+      : 'Ocultar tabla de datos';
+  });
+
+  // Eventos de la Calculadora de Calorías
+  $('#btn-calc-back-diario').addEventListener('click', () => showView('diario'));
+  $('#btn-use-latest-weight').addEventListener('click', () => {
+    const latest = getLatestWeightEntry();
+    if (latest) {
+      $('#calc-weight').value = latest.weight;
+      toast(`Peso de ${fmt(latest.weight)} kg aplicado al cálculo`);
+    } else {
+      toast('Aún no has registrado ningún peso');
+    }
+  });
+
+  $('#btn-run-calculation').addEventListener('click', runCalculator);
+
+  document.querySelectorAll('.scenario-item').forEach(el => {
+    el.addEventListener('click', () => selectScenario(el.dataset.scenario));
+  });
+
+  $('#btn-calc-opt-a').addEventListener('click', handleOptionA);
+  $('#btn-calc-opt-b').addEventListener('click', handleOptionB);
+
+  $('#btn-close-goal-dialog').addEventListener('click', () => $('#goal-confirm-dialog').close());
+  $('#goal-confirm-input').addEventListener('input', () => {
+    const val = Number($('#goal-confirm-input').value) || 0;
+    $('#goal-preview-display').textContent = `${fmt(val)} kcal`;
+  });
+  $('#goal-confirm-form').addEventListener('submit', confirmSetGoal);
+
+  // Accesos desde Ajustes
+  $('#btn-goto-calc').addEventListener('click', () => showView('calculadora'));
+  $('#btn-goto-peso').addEventListener('click', () => showView('peso'));
+  $('#btn-goto-historial').addEventListener('click', () => showView('historial'));
+
+  $('#btn-save-goal').addEventListener('click', saveGoals);
+  $('#btn-clear-kcal-goal').addEventListener('click', clearCalorieGoal);
+  $('#btn-export').addEventListener('click', exportData);
+  $('#file-import').addEventListener('change', importData);
+  $('#btn-persist').addEventListener('click', requestPersistence);
+
+  // Modales existentes
   $('#btn-close-quick-add').addEventListener('click', () => $('#quick-add-dialog').close());
   document.querySelectorAll('.meal-chip').forEach(chip => {
     chip.addEventListener('click', () => {
@@ -1596,7 +2357,6 @@ function attachEvents() {
   $('#tab-mode-manual').addEventListener('click', () => setQuickAddMode('manual'));
   $('#quick-search-input').addEventListener('input', renderQuickFoodsList);
 
-  // Delegación en lista de alimentos en Quick Add
   $('#quick-foods-list').addEventListener('click', event => {
     const btn = event.target.closest('[data-select-quick-food]');
     if (!btn) return;
@@ -1616,7 +2376,6 @@ function attachEvents() {
 
   $('#btn-add-staged-item').addEventListener('click', addStagedItemFromLibrary);
 
-  // Formulario Manual en Quick Add
   document.querySelectorAll('input[name="manual-base-type"]').forEach(r => {
     r.addEventListener('change', event => {
       const isPortion = event.target.value === 'portion';
@@ -1637,7 +2396,6 @@ function attachEvents() {
 
   $('#btn-add-manual-item').addEventListener('click', addStagedItemFromManual);
 
-  // Delegación en items staged (eliminar item acumulado)
   $('#staged-items-list').addEventListener('click', event => {
     const btn = event.target.closest('[data-remove-staged]');
     if (!btn) return;
@@ -1648,7 +2406,6 @@ function attachEvents() {
 
   $('#btn-save-entire-meal').addEventListener('click', saveEntireMeal);
 
-  // Modal Direct Use
   $('#btn-close-use-dialog').addEventListener('click', () => $('#use-food-dialog').close());
   $('#u-amount-input').addEventListener('input', updateDirectUsePreview);
   $('#u-amount-chips').addEventListener('click', event => {
@@ -1659,22 +2416,15 @@ function attachEvents() {
   });
   $('#use-food-form').addEventListener('submit', confirmDirectUseFood);
 
-  // Modal Editar Entrada
   $('#btn-close-entry-dialog').addEventListener('click', () => $('#entry-dialog').close());
   ['#edit-entry-amount', '#edit-entry-density-kcal', '#edit-entry-density-protein'].forEach(sel => {
     $(sel).addEventListener('input', updateEditEntryPreview);
   });
   $('#entry-form').addEventListener('submit', saveEditEntry);
-
-  // Ajustes: guardar objetivos y respaldos
-  $('#btn-save-goal').addEventListener('click', saveGoals);
-  $('#btn-export').addEventListener('click', exportData);
-  $('#file-import').addEventListener('change', importData);
-  $('#btn-persist').addEventListener('click', requestPersistence);
 }
 
 // -------------------------------------------------------------
-// 13. INICIALIZACIÓN DE LA APLICACIÓN
+// 16. INICIALIZACIÓN DE LA APLICACIÓN
 // -------------------------------------------------------------
 async function init() {
   try {
