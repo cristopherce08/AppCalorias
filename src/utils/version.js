@@ -8,8 +8,8 @@
  */
 
 export const APP_VERSION = '4.0';
-export const APP_BUILD = '4.0.8';
+export const APP_BUILD = '4.0.9';
 export const APP_NAME = 'Kalora';
-export const APP_DISPLAY_VERSION = 'Kalora · Versión 4.0 · Build 4.0.8';
+export const APP_DISPLAY_VERSION = 'Kalora · Versión 4.0 · Build 4.0.9';
 export const DB_SCHEMA_VERSION = 3;
-export const SW_CACHE_NAME = 'kalora-shell-v4.0.8';
+export const SW_CACHE_NAME = 'kalora-shell-v4.0.9';

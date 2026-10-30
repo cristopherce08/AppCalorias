@@ -146,15 +146,6 @@ export function renderDashboard() {
       const kcalVal = Number.isFinite(e.kcal) ? e.kcal : computeNutrition(e).kcal;
       const protVal = (e.protein !== undefined && e.protein !== null) ? e.protein : computeNutrition(e).protein;
 
-      let baseTxt = '';
-      if (e.baseType === 'total_consumed') {
-        baseTxt = `Valores totales (${fmt(e.kcalPer100)} kcal / 100 ${esc(e.unit)})`;
-      } else if (e.baseType === 'portion') {
-        baseTxt = `${fmt(e.kcalPerPortion)} kcal${e.proteinPerPortion ? ' · ' + fmt(e.proteinPerPortion) + ' g prot' : ''} / ${esc(e.unit)}`;
-      } else {
-        baseTxt = `${fmt(e.kcalPer100)} kcal${e.proteinPer100 ? ' · ' + fmt(e.proteinPer100) + ' g prot' : ''} / 100 ${esc(e.unit)}`;
-      }
-
       const brandTag = e.brand ? `<span class="meal-item-brand">${esc(e.brand)}</span>` : '';
       const protDisplay = protVal !== null
         ? `<span class="badge-prot">${fmt(protVal)} g prot</span>`
@@ -164,7 +155,7 @@ export function renderDashboard() {
         <div class="meal-item">
           <div class="meal-item-main">
             <div class="meal-item-name">${esc(e.name)}${brandTag}</div>
-            <div class="meal-item-detail">${fmt(e.amount)} ${esc(e.unit)} · ${baseTxt}</div>
+            <div class="meal-item-detail">${fmt(e.amount)} ${esc(e.unit)}</div>
           </div>
           <div class="meal-item-side">
             <div class="item-nutri-badges">
