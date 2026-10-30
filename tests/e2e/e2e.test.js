@@ -84,7 +84,14 @@ try {
 
   await page.click('[data-view="diario"]');
   assert.equal(await page.locator('#view-diario').isVisible(), true);
-  console.log('[PASS 2/10] Navegación y versionado en Ajustes verificados');
+
+  // Verificar que el botón Agregar está posicionado exactamente en medio (hijo 3 de 5)
+  const navAddIndex = await page.evaluate(() => {
+    const navChildren = Array.from(document.querySelectorAll('.bottom-nav > .nav-item'));
+    return navChildren.findIndex(el => el.id === 'nav-btn-add');
+  });
+  assert.equal(navAddIndex, 2, 'El botón Agregar debe ser el tercer elemento (índice 2, en el centro de 5 accesos)');
+  console.log('[PASS 2/10] Navegación, versionado y botón Agregar en el centro verificados');
 
   console.log('[E2E 3/10] Creando alimento en la biblioteca y marcando favorito...');
   await page.click('[data-view="alimentos"]');
@@ -205,12 +212,14 @@ try {
   await page.click('#btn-close-quick-add');
   console.log('[PASS 8/10] Detección de diálogo activo y cierre seguro verificado');
 
-  console.log('[E2E 9/10] Eliminación de ingredientes y actualización reactiva...');
+  console.log('[E2E 9/10] Eliminación de ingredientes a través del menú de 3 puntos y actualización reactiva...');
   page.on('dialog', async dialog => {
     await dialog.accept();
   });
+  await page.locator('[data-more-entry]').first().click();
   await page.locator('[data-delete-entry]').first().click();
   await page.waitForFunction(() => document.querySelector('#day-total-kcal')?.textContent?.includes('180') || document.querySelector('#day-total-kcal')?.textContent?.includes('375'));
+  await page.locator('[data-more-entry]').first().click();
   await page.locator('[data-delete-entry]').first().click();
   await page.waitForFunction(() => document.querySelector('#day-total-kcal')?.textContent === '0');
   console.log('[PASS 9/10] Flujo de eliminación e interacción nativa completado');

@@ -127,7 +127,7 @@ export function initSettingsListeners() {
         if (res?.status === 'found') {
           toast('Nueva versión detectada. Descargando...');
         } else {
-          toast('Ya tienes la versión más reciente (Build 4.0.4)');
+          toast(`Ya tienes la versión más reciente (${APP_DISPLAY_VERSION})`);
         }
       } catch (err) {
         toast('No se pudo comprobar la actualización');

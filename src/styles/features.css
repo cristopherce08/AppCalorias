@@ -178,20 +178,21 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 .meal-title-area {
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: 10px;
   min-width: 0;
+  flex: 1 1 auto;
 }
 .meal-emoji {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 13px;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
   background: #f5f2ff;
   color: var(--purple-dark);
   flex-shrink: 0;
@@ -203,34 +204,38 @@
 }
 .meal-name {
   font-weight: 750;
-  font-size: 15.5px;
+  font-size: 15px;
+  line-height: 1.25;
 }
 .meal-count {
   color: var(--sub);
-  font-size: 11px;
+  font-size: 11.5px;
   margin-top: 2px;
+  white-space: nowrap;
 }
 .meal-totals-pill {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   flex-shrink: 0;
 }
 .pill-kcal {
   background: var(--purple-soft);
   color: var(--purple-dark);
-  padding: 5px 9px;
-  border-radius: 10px;
-  font-size: 12.5px;
+  padding: 4px 8px;
+  border-radius: 9px;
+  font-size: 12px;
   font-weight: 750;
+  white-space: nowrap;
 }
 .pill-protein {
   background: var(--teal-soft);
   color: var(--teal-dark);
-  padding: 5px 9px;
-  border-radius: 10px;
-  font-size: 12.5px;
+  padding: 4px 8px;
+  border-radius: 9px;
+  font-size: 12px;
   font-weight: 750;
+  white-space: nowrap;
 }
 .meal-empty {
   padding: 16px 0 4px;
@@ -250,10 +255,15 @@
   align-items: center;
   gap: 10px;
   border-bottom: 1px solid #f1f3f8;
+  position: relative;
 }
 .meal-item:last-child {
   border-bottom: none;
   padding-bottom: 2px;
+}
+.meal-item-main {
+  min-width: 0;
+  flex: 1 1 auto;
 }
 .meal-item-name {
   font-size: 13.5px;
@@ -270,6 +280,7 @@
   padding: 1px 6px;
   border-radius: 6px;
   margin-left: 5px;
+  vertical-align: middle;
 }
 .meal-item-detail {
   color: var(--sub);
@@ -292,6 +303,7 @@
   font-size: 12.5px;
   font-weight: 750;
   color: var(--ink);
+  white-space: nowrap;
 }
 .badge-prot {
   font-size: 11px;
@@ -300,6 +312,7 @@
   background: var(--teal-soft);
   padding: 1px 6px;
   border-radius: 6px;
+  white-space: nowrap;
 }
 .icon-action {
   background: #f6f5fb;
@@ -312,6 +325,90 @@
   width: 32px;
   display: grid;
   place-items: center;
+}
+
+/* MENÚ COMPACTO DE 3 PUNTOS EN INGREDIENTES */
+.entry-menu-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.entry-more-btn {
+  background: #f6f5fb;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  border-radius: 8px;
+  color: #6b7280;
+  height: 32px;
+  width: 32px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.entry-more-btn:active,
+.entry-more-btn[aria-expanded="true"] {
+  background: #e8e6f5;
+  color: var(--purple-dark);
+}
+.entry-menu-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 40;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.14), 0 2px 6px rgba(15, 23, 42, 0.04);
+  padding: 5px;
+  min-width: 124px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: entryMenuFadeIn 0.12s ease-out;
+}
+.entry-menu-dropdown[hidden] {
+  display: none !important;
+}
+@keyframes entryMenuFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.entry-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  background: transparent;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.1s ease;
+}
+.entry-menu-item:active {
+  background: #f3f4f6;
+}
+.entry-menu-item.item-delete {
+  color: #e11d48;
+}
+.entry-menu-item.item-delete:active {
+  background: #ffe4e6;
+}
+.entry-menu-item svg {
+  flex-shrink: 0;
 }
 .meal-add {
   display: inline-flex;
