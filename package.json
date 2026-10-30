@@ -1,6 +1,6 @@
 {
   "name": "kalora",
-  "version": "4.0.9",
+  "version": "4.0.10",
   "description": "Progressive Web App local para iPhone para registro de calorías, proteínas, calculadora energética y peso corporal.",
   "type": "module",
   "scripts": {

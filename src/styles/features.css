@@ -942,7 +942,8 @@
   margin: 0;
 }
 .meal-item:has([aria-expanded="true"]),
-.weight-row-item:has([aria-expanded="true"]) {
+.weight-row-item:has([aria-expanded="true"]),
+.food-card:has([aria-expanded="true"]) {
   z-index: 35;
   position: relative;
 }

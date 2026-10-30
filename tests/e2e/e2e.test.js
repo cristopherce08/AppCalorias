@@ -109,7 +109,20 @@ try {
   await page.waitForSelector('.food-card');
   const foodCardText = await page.locator('.food-card').first().textContent();
   assert.match(foodCardText, /Avena Premium/);
-  console.log('[PASS 3/10] Alimento recurrente y favorito persistido en IndexedDB');
+
+  // Verificar botón de 3 puntos y opciones en la tarjeta de alimento
+  const moreFoodBtn = page.locator('.food-card [data-more-food]').first();
+  assert.equal(await moreFoodBtn.isVisible(), true);
+  await moreFoodBtn.click();
+  const foodMenu = page.locator('.food-menu-dropdown:not([hidden])').first();
+  assert.equal(await foodMenu.isVisible(), true);
+  assert.equal(await foodMenu.locator('[data-duplicate-food]').isVisible(), true);
+  assert.equal(await foodMenu.locator('[data-edit-food]').isVisible(), true);
+  assert.equal(await foodMenu.locator('[data-delete-food]').isVisible(), true);
+  await page.keyboard.press('Escape');
+  assert.equal(await foodMenu.isVisible(), false);
+
+  console.log('[PASS 3/10] Alimento recurrente, favorito y menú de 3 puntos (copiar/editar/eliminar) verificados');
 
   console.log('[E2E 4/10] Registrando comida rápida en el Diario...');
   await page.click('[data-view="diario"]');
