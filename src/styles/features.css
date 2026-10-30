@@ -796,38 +796,48 @@
 /* SECCIÓN MI PESO */
 .weight-summary-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
   margin-bottom: 15px;
 }
 .weight-stat-card {
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 14px;
-  padding: 12px 10px;
+  padding: 10px 5px;
   text-align: center;
   box-shadow: var(--shadow-sm);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 .stat-label {
-  font-size: 9.5px;
-  letter-spacing: 0.8px;
+  font-size: 8.5px;
+  letter-spacing: 0.4px;
   font-weight: 800;
   color: var(--sub);
   text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .stat-value {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 800;
-  margin: 4px 0 2px;
+  margin: 3px 0 2px;
   color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .stat-unit {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--sub);
 }
 .stat-sub {
-  font-size: 10.5px;
+  font-size: 9.5px;
   color: var(--sub);
   display: block;
   white-space: nowrap;
@@ -931,6 +941,11 @@
   font-size: 16px;
   margin: 0;
 }
+.meal-item:has([aria-expanded="true"]),
+.weight-row-item:has([aria-expanded="true"]) {
+  z-index: 35;
+  position: relative;
+}
 .weights-list-container {
   display: flex;
   flex-direction: column;
@@ -940,40 +955,55 @@
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 14px;
-  padding: 12px 14px;
+  padding: 11px 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
   box-shadow: var(--shadow-sm);
+  position: relative;
 }
 .weight-row-left {
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 .w-row-date {
   font-weight: 780;
   font-size: 13.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .w-row-note {
   font-size: 11px;
   color: var(--sub);
   margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .weight-row-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  flex-shrink: 0;
 }
 .w-row-val {
-  font-size: 16px;
+  font-size: 15.5px;
   font-weight: 800;
   color: var(--ink);
+  white-space: nowrap;
 }
 .w-diff-badge {
   font-size: 11px;
   font-weight: 750;
   padding: 2px 6px;
   border-radius: 6px;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
 }
 .w-diff-badge.down {
   background: #ecfdf5;

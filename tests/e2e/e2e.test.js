@@ -173,7 +173,19 @@ try {
 
   const lastW = await page.locator('#stat-last-weight').textContent();
   assert.match(lastW, /74\.35/);
-  console.log('[PASS 5/10] Pesaje corporal con 2 decimales (74.35 kg) registrado y visualizado en stat card');
+
+  // Verificar botón de 3 puntos y menú contextual en el registro de peso
+  const moreWeightBtn = page.locator('#weights-list-container [data-more-weight]').first();
+  assert.equal(await moreWeightBtn.isVisible(), true);
+  await moreWeightBtn.click();
+  const dropdownMenu = page.locator('.weight-menu-dropdown:not([hidden])').first();
+  assert.equal(await dropdownMenu.isVisible(), true);
+  assert.equal(await dropdownMenu.locator('[data-edit-weight]').isVisible(), true);
+  assert.equal(await dropdownMenu.locator('[data-delete-weight]').isVisible(), true);
+  await page.keyboard.press('Escape');
+  assert.equal(await dropdownMenu.isVisible(), false);
+
+  console.log('[PASS 5/10] Pesaje corporal con 2 decimales (74.35 kg) registrado, stat card y menú de 3 puntos verificados');
 
   console.log('[E2E 6/10] Calculadora de gasto energético Mifflin-St Jeor...');
   await page.click('[data-view="ajustes"]');
