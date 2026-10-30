@@ -20,7 +20,7 @@ export const DIALOGS_HTML = `<dialog id="weight-dialog" class="entry-dialog" ari
 
       <label class="form-label">
         Peso corporal (kg)
-        <input id="w-val-input" type="number" min="20" max="400" step="0.1" inputmode="decimal" placeholder="Ej.: 81.5" required />
+        <input id="w-val-input" type="number" min="20" max="400" step="any" inputmode="decimal" placeholder="Ej.: 81.5" required />
       </label>
 
       <label class="form-label">

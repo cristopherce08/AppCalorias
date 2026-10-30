@@ -138,8 +138,8 @@ export function computeWeightStats(weightEntries) {
   const previous = sorted.length >= 2 ? sorted[sorted.length - 2] : null;
   const first = sorted[0];
 
-  const recentDiff = previous ? Math.round((latest.weight - previous.weight) * 10) / 10 : null;
-  const totalDiff = sorted.length >= 2 ? Math.round((latest.weight - first.weight) * 10) / 10 : null;
+  const recentDiff = previous ? Math.round((latest.weight - previous.weight) * 100) / 100 : null;
+  const totalDiff = sorted.length >= 2 ? Math.round((latest.weight - first.weight) * 100) / 100 : null;
 
   return {
     latest,

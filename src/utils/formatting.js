@@ -2,7 +2,7 @@
  * formatting.js — Utilidades puras de formateo numérico y escape seguro de texto
  */
 
-export const numberFormat = new Intl.NumberFormat('es-PE', { maximumFractionDigits: 1 });
+export const numberFormat = new Intl.NumberFormat('es-PE', { maximumFractionDigits: 2 });
 
 /**
  * Formatea un número según las convenciones numéricas de la app

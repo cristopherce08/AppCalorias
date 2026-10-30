@@ -161,19 +161,19 @@ try {
   await page.waitForFunction(() => document.querySelector('#day-total-kcal')?.textContent?.includes('555'));
   console.log('[PASS 4b/10] Alimento con valores totales registrado e integrado en el diario (555 kcal)');
 
-  console.log('[E2E 5/10] Registrando pesaje corporal...');
+  console.log('[E2E 5/10] Registrando pesaje corporal con 2 decimales...');
   await page.click('[data-view="peso"]');
   await page.click('#btn-add-weight');
   await page.waitForSelector('#weight-dialog[open]');
 
-  await page.fill('#w-val-input', '81.5');
+  await page.fill('#w-val-input', '74.35');
   await page.fill('#w-note-input', 'Ayunas test');
   await page.click('#weight-form button[type="submit"]');
   await page.waitForSelector('#weight-dialog', { state: 'hidden' });
 
   const lastW = await page.locator('#stat-last-weight').textContent();
-  assert.match(lastW, /81\.5/);
-  console.log('[PASS 5/10] Pesaje corporal registrado y visualizado en stat card');
+  assert.match(lastW, /74\.35/);
+  console.log('[PASS 5/10] Pesaje corporal con 2 decimales (74.35 kg) registrado y visualizado en stat card');
 
   console.log('[E2E 6/10] Calculadora de gasto energético Mifflin-St Jeor...');
   await page.click('[data-view="ajustes"]');

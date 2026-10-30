@@ -73,4 +73,16 @@ const stats = computeWeightStats(weights);
 assert.equal(stats.latest.weight, 81.2);
 assert.equal(stats.recentDiff, -0.6); // 81.2 - 81.8 = -0.6
 assert.equal(stats.totalDiff, -1.3);  // 81.2 - 82.5 = -1.3
+
+// 6. Estadísticas con 2 decimales
+const weights2Decimals = [
+  { id: 'w10', date: '2026-10-01', weight: 74.85 },
+  { id: 'w11', date: '2026-10-08', weight: 74.50 },
+  { id: 'w12', date: '2026-10-15', weight: 74.35 }
+];
+const stats2 = computeWeightStats(weights2Decimals);
+assert.equal(stats2.latest.weight, 74.35);
+assert.equal(stats2.recentDiff, -0.15); // 74.35 - 74.50 = -0.15
+assert.equal(stats2.totalDiff, -0.5);   // 74.35 - 74.85 = -0.5
+console.log('[PASS] Estadísticas de evolución de peso con 2 decimales correctas');
 console.log('[PASS] Estadísticas de evolución de peso correctas');

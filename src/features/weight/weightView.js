@@ -170,7 +170,7 @@ function renderAccessibleWeightTable(sorted) {
     const prev = arr[idx + 1];
     let diffTxt = '—';
     if (prev) {
-      const diff = Math.round((w.weight - prev.weight) * 10) / 10;
+      const diff = Math.round((w.weight - prev.weight) * 100) / 100;
       diffTxt = `${diff > 0 ? '+' : ''}${fmt(diff)} kg`;
     }
     return `
@@ -203,7 +203,7 @@ function renderWeightList(sorted) {
     const prevItem = reversed[idx + 1];
     let diffBadge = '';
     if (prevItem) {
-      const diff = Math.round((item.weight - prevItem.weight) * 10) / 10;
+      const diff = Math.round((item.weight - prevItem.weight) * 100) / 100;
       if (diff < 0) {
         diffBadge = `<span class="w-diff-badge down">▼ ${fmt(Math.abs(diff))} kg</span>`;
       } else if (diff > 0) {

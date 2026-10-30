@@ -9,6 +9,7 @@ console.log('--- Probando utilidades puras del dominio ---');
 
 // 1. Formatting
 assert.strictEqual(fmt(1234.5), (new Intl.NumberFormat('es-PE', { maximumFractionDigits: 1 })).format(1234.5));
+assert.strictEqual(fmt(74.35), (new Intl.NumberFormat('es-PE', { maximumFractionDigits: 2 })).format(74.35));
 assert.strictEqual(fmt(0), '0');
 assert.strictEqual(esc('<script>alert("xss")</script>'), '&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;');
 
