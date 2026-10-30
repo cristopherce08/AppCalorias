@@ -174,6 +174,11 @@ try {
   const lastW = await page.locator('#stat-last-weight').textContent();
   assert.match(lastW, /74\.35/);
 
+  // Verificar fecha completa visible sin cortes con puntos suspensivos
+  const dateTextEl = await page.locator('#weights-list-container .w-row-date').first().textContent();
+  assert.ok(!dateTextEl.includes('...'), 'La fecha no debe cortarse con puntos suspensivos');
+  assert.match(dateTextEl, /octubre/i, 'La fecha debe contener el mes completo');
+
   // Verificar botón de 3 puntos y menú contextual en el registro de peso
   const moreWeightBtn = page.locator('#weights-list-container [data-more-weight]').first();
   assert.equal(await moreWeightBtn.isVisible(), true);

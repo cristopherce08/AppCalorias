@@ -955,11 +955,11 @@
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 14px;
-  padding: 11px 12px;
+  padding: 10px 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   box-shadow: var(--shadow-sm);
   position: relative;
 }
@@ -970,19 +970,18 @@
   flex: 1 1 auto;
 }
 .w-row-date {
-  font-weight: 780;
-  font-size: 13.5px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-weight: 750;
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--ink);
+  white-space: normal;
+  word-break: normal;
 }
 .w-row-note {
   font-size: 11px;
   color: var(--sub);
   margin-top: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.25;
 }
 .weight-row-right {
   display: flex;
@@ -991,15 +990,15 @@
   flex-shrink: 0;
 }
 .w-row-val {
-  font-size: 15.5px;
+  font-size: 15px;
   font-weight: 800;
   color: var(--ink);
   white-space: nowrap;
 }
 .w-diff-badge {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 750;
-  padding: 2px 6px;
+  padding: 2px 5px;
   border-radius: 6px;
   white-space: nowrap;
   display: inline-flex;
