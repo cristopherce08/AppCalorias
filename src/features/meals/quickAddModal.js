@@ -18,7 +18,7 @@ let stagedItems = [];
 let selectedFoodForQuickAdd = null;
 let isSaving = false;
 
-export function openQuickAdd(meal = 'desayuno') {
+export function openQuickAdd(meal = 'desayuno', mode = 'library') {
   stagedMeal = meal;
   stagedItems = [];
   selectedFoodForQuickAdd = null;
@@ -28,7 +28,12 @@ export function openQuickAdd(meal = 'desayuno') {
     chip.classList.toggle('active', chip.dataset.mealChoice === stagedMeal);
   });
 
-  setQuickAddMode('library');
+  const totalForm = $('#quick-add-total-form');
+  if (totalForm) totalForm.reset();
+  updateTotalMealButtonLabel();
+  updateTotalMealPreview();
+
+  setQuickAddMode(mode);
   const searchInput = $('#quick-search-input');
   if (searchInput) searchInput.value = '';
   renderQuickFoodsList();
@@ -45,16 +50,135 @@ export function closeQuickAdd() {
 }
 
 function setQuickAddMode(mode) {
+  const isTotal = mode === 'total';
   const isLib = mode === 'library';
+  const isMan = mode === 'manual';
+
+  const tabTotal = $('#tab-mode-total');
   const tabLib = $('#tab-mode-library');
   const tabMan = $('#tab-mode-manual');
+  const panelTotal = $('#quick-add-total-form');
   const panelLib = $('#quick-add-library-panel');
   const formMan = $('#quick-add-manual-form');
 
+  if (tabTotal) tabTotal.classList.toggle('active', isTotal);
   if (tabLib) tabLib.classList.toggle('active', isLib);
-  if (tabMan) tabMan.classList.toggle('active', !isLib);
+  if (tabMan) tabMan.classList.toggle('active', isMan);
+
+  if (panelTotal) panelTotal.hidden = !isTotal;
   if (panelLib) panelLib.hidden = !isLib;
-  if (formMan) formMan.hidden = isLib;
+  if (formMan) formMan.hidden = !isMan;
+
+  if (isTotal) {
+    updateTotalMealButtonLabel();
+    updateTotalMealPreview();
+    const kcalInput = $('#total-meal-kcal');
+    if (kcalInput) {
+      setTimeout(() => kcalInput.focus(), 60);
+    }
+  }
+}
+
+function updateTotalMealButtonLabel() {
+  const mealObj = MEALS.find(m => m.id === stagedMeal) || MEALS[0];
+  const btnSave = $('#btn-save-direct-meal-total');
+  if (btnSave) {
+    btnSave.textContent = `Guardar en ${mealObj.title}`;
+  }
+  const nameInput = $('#total-meal-name');
+  if (nameInput) {
+    nameInput.placeholder = `Ej.: ${mealObj.title} completo, Menú del día...`;
+  }
+}
+
+function updateTotalMealPreview() {
+  const kcalInput = $('#total-meal-kcal');
+  const protInput = $('#total-meal-protein');
+  const prevKcal = $('#total-meal-preview-kcal');
+  const prevProt = $('#total-meal-preview-protein');
+
+  const kcalVal = Number(kcalInput?.value) || 0;
+  const protRaw = protInput?.value.trim() || '';
+  const protVal = (protRaw !== '' && Number.isFinite(Number(protRaw)) && Number(protRaw) >= 0)
+    ? Number(protRaw)
+    : null;
+
+  if (prevKcal) prevKcal.textContent = `${fmt(kcalVal)} kcal`;
+  if (prevProt) prevProt.textContent = protVal !== null ? `${fmt(protVal)} g` : '—';
+}
+
+async function saveDirectMealTotal(event) {
+  if (event) event.preventDefault();
+  if (isSaving) return;
+
+  const mealObj = MEALS.find(m => m.id === stagedMeal) || MEALS[0];
+  const nameInput = $('#total-meal-name');
+  const kcalInput = $('#total-meal-kcal');
+  const protInput = $('#total-meal-protein');
+
+  const entryName = (nameInput?.value.trim()) || mealObj.title;
+  const kcalRaw = Number(kcalInput?.value);
+  const protRaw = protInput?.value.trim() || '';
+
+  if (!Number.isFinite(kcalRaw) || kcalRaw < 0 || kcalInput?.value.trim() === '') {
+    toast('Introduce las calorías totales de la comida');
+    return;
+  }
+
+  let totalProtein = null;
+  if (protRaw !== '' && Number.isFinite(Number(protRaw)) && Number(protRaw) >= 0) {
+    totalProtein = Number(protRaw);
+  }
+
+  isSaving = true;
+  beginAsyncOperation('save-meal-total');
+  const btnSave = $('#btn-save-direct-meal-total');
+  if (btnSave) {
+    btnSave.disabled = true;
+    btnSave.textContent = 'Guardando...';
+  }
+
+  try {
+    const { currentDate } = getState();
+    const equiv = convertTotalToPer100(kcalRaw, totalProtein, 1);
+
+    const entry = {
+      id: makeId(),
+      date: currentDate,
+      meal: stagedMeal,
+      name: entryName,
+      brand: '',
+      baseType: 'total_consumed',
+      amount: 1,
+      unit: 'comida',
+      portionGrams: null,
+      kcalPer100: equiv.kcalPer100,
+      proteinPer100: equiv.proteinPer100,
+      kcalPerPortion: null,
+      proteinPerPortion: null,
+      totalKcal: kcalRaw,
+      totalProtein,
+      kcal: Math.round(kcalRaw * 10) / 10,
+      protein: totalProtein !== null ? Math.round(totalProtein * 10) / 10 : null,
+      createdAt: new Date().toISOString()
+    };
+
+    await saveEntry(entry);
+    closeQuickAdd();
+    await refreshState();
+    navigateTo('diario');
+    toast(`¡${entryName} guardado en ${mealObj.title}!`);
+  } catch (error) {
+    console.error(error);
+    toast('Error al guardar la comida');
+  } finally {
+    isSaving = false;
+    endAsyncOperation('save-meal-total');
+    if (btnSave) {
+      btnSave.disabled = false;
+      updateTotalMealButtonLabel();
+    }
+  }
 }
 
 function renderQuickFoodsList() {
@@ -79,9 +203,14 @@ function renderQuickFoodsList() {
     container.innerHTML = `
       <div style="padding:16px;text-align:center;color:#8f98ae;font-size:12px">
         No hay alimentos coincidentes.<br>
-        <button type="button" class="text-button-mini" id="btn-switch-to-manual" style="margin-top:6px">Usar ingreso manual</button>
+        <div style="display:flex;gap:8px;justify-content:center;margin-top:8px">
+          <button type="button" class="text-button-mini" id="btn-switch-to-total">⚡ Total directo</button>
+          <button type="button" class="text-button-mini" id="btn-switch-to-manual">Ingreso manual</button>
+        </div>
       </div>
     `;
+    const btnTot = $('#btn-switch-to-total');
+    if (btnTot) btnTot.addEventListener('click', () => setQuickAddMode('total'));
     const btn = $('#btn-switch-to-manual');
     if (btn) btn.addEventListener('click', () => setQuickAddMode('manual'));
     return;
@@ -501,15 +630,29 @@ export function initQuickAddListeners() {
     chip.addEventListener('click', () => {
       stagedMeal = chip.dataset.mealChoice;
       document.querySelectorAll('.meal-chip').forEach(c => c.classList.toggle('active', c === chip));
+      updateTotalMealButtonLabel();
       renderStagedSection();
     });
   });
 
-  // Pestañas Biblioteca vs Manual
+  // Pestañas Total directo vs Biblioteca vs Manual
+  const tabTot = $('#tab-mode-total');
   const tabLib = $('#tab-mode-library');
   const tabMan = $('#tab-mode-manual');
+  if (tabTot) tabTot.addEventListener('click', () => setQuickAddMode('total'));
   if (tabLib) tabLib.addEventListener('click', () => setQuickAddMode('library'));
   if (tabMan) tabMan.addEventListener('click', () => setQuickAddMode('manual'));
+
+  // Inputs y submit de Total directo por comida
+  ['#total-meal-kcal', '#total-meal-protein'].forEach(sel => {
+    const el = $(sel);
+    if (el) el.addEventListener('input', updateTotalMealPreview);
+  });
+
+  const totalForm = $('#quick-add-total-form');
+  if (totalForm) {
+    totalForm.addEventListener('submit', saveDirectMealTotal);
+  }
 
   // Búsqueda en biblioteca
   const searchInput = $('#quick-search-input');

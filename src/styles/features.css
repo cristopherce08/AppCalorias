@@ -410,17 +410,53 @@
 .entry-menu-item svg {
   flex-shrink: 0;
 }
+.meal-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+}
+.meal-btn-total {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #f5f3ff;
+  color: var(--purple);
+  border: 1px solid #ddd6fe;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+.meal-btn-total:active {
+  background: #ede9fe;
+  transform: scale(0.97);
+}
+.meal-btn-total svg {
+  flex-shrink: 0;
+}
 .meal-add {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   background: transparent;
   border: 0;
+  color: var(--sub);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 4px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s ease;
+}
+.meal-add:active {
   color: var(--purple);
-  font-size: 12.5px;
-  font-weight: 750;
-  margin-top: 13px;
-  padding: 5px 0;
 }
 
 /* FILTRO Y BUSCADOR */

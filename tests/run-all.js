@@ -16,6 +16,8 @@ try {
   console.log('');
   await import('./unit/totalConsumedNutrition.test.js');
   console.log('');
+  await import('./unit/totalMealEntry.test.js');
+  console.log('');
   await import('./integration/database.test.js');
   console.log('\n====================================================');
   console.log('  ✔ TODAS LAS PRUEBAS PASARON EXITOSAMENTE (100%)    ');

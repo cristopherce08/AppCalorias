@@ -85,11 +85,55 @@ export const DIALOGS_HTML = `<dialog id="weight-dialog" class="entry-dialog" ari
       <button type="button" class="meal-chip" data-meal-choice="snack">Snack</button>
     </div>
 
-    <!-- TABS DE MODO: DE BIBLIOTECA vs INGRESO MANUAL -->
+    <!-- TABS DE MODO: TOTAL DIRECTO vs DE BIBLIOTECA vs INGRESO MANUAL -->
     <div class="mode-tabs">
+      <button type="button" class="mode-tab" id="tab-mode-total">⚡ Total directo</button>
       <button type="button" class="mode-tab active" id="tab-mode-library">De Mis alimentos</button>
       <button type="button" class="mode-tab" id="tab-mode-manual">Ingreso manual</button>
     </div>
+
+    <!-- SECCIÓN: REGISTRO DIRECTO DE TOTAL POR COMIDA -->
+    <form id="quick-add-total-form" class="manual-entry-form" hidden>
+      <div class="total-direct-banner">
+        <div class="total-direct-icon" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </div>
+        <div>
+          <strong>Registro directo sin ingredientes</strong>
+          <p>Anota las calorías y proteínas totales de esta comida en un solo paso.</p>
+        </div>
+      </div>
+
+      <label class="form-label">
+        ¿Qué comiste? (Opcional)
+        <input id="total-meal-name" type="text" maxlength="120" placeholder="Ej.: Almuerzo completo, Menú del día..." autocomplete="off" />
+      </label>
+
+      <div class="form-grid">
+        <label class="form-label">
+          Calorías totales (kcal) *
+          <input id="total-meal-kcal" type="number" min="0" max="20000" step="any" inputmode="decimal" placeholder="Ej.: 650" required />
+        </label>
+        <label class="form-label">
+          Proteínas totales (g)
+          <input id="total-meal-protein" type="number" min="0" max="1000" step="any" inputmode="decimal" placeholder="Ej.: 35 (opcional)" />
+        </label>
+      </div>
+
+      <div class="nutrition-preview-card" style="margin-top:2px; margin-bottom:14px;">
+        <div class="preview-metric">
+          <span class="preview-label">Calorías calculadas</span>
+          <strong id="total-meal-preview-kcal" class="preview-val-kcal">0 kcal</strong>
+        </div>
+        <div class="preview-divider"></div>
+        <div class="preview-metric">
+          <span class="preview-label">Proteínas calculadas</span>
+          <strong id="total-meal-preview-protein" class="preview-val-protein">—</strong>
+        </div>
+      </div>
+
+      <button type="submit" id="btn-save-direct-meal-total" class="primary-button wide-button">Guardar en Desayuno</button>
+    </form>
 
     <!-- SECCIÓN DE BIBLIOTECA -->
     <div id="quick-add-library-panel">

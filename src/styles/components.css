@@ -239,8 +239,8 @@
 /* TABS DE MODO EN QUICK ADD */
 .mode-tabs {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
   margin-bottom: 14px;
   border-bottom: 1px solid var(--line);
   padding-bottom: 6px;
@@ -248,15 +248,49 @@
 .mode-tab {
   background: transparent;
   border: 0;
-  padding: 8px;
+  padding: 8px 4px;
   font-weight: 750;
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--sub);
   border-bottom: 2px solid transparent;
+  text-align: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
 }
 .mode-tab.active {
   color: var(--purple);
   border-bottom-color: var(--purple);
+}
+
+/* BANNER DE REGISTRO DIRECTO POR COMIDA */
+.total-direct-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #fbf7ff;
+  border: 1px solid #ebd5ff;
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+}
+.total-direct-icon {
+  color: var(--purple);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.total-direct-banner strong {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 750;
+  color: #581c87;
+  margin-bottom: 2px;
+}
+.total-direct-banner p {
+  margin: 0;
+  font-size: 11.5px;
+  color: #7e22ce;
+  line-height: 1.35;
 }
 
 /* LISTA DE ALIMENTOS EN QUICK ADD */

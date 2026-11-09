@@ -174,6 +174,29 @@ try {
   await page.waitForFunction(() => document.querySelector('#day-total-kcal')?.textContent?.includes('555'));
   console.log('[PASS 4b/10] Alimento con valores totales registrado e integrado en el diario (555 kcal)');
 
+  console.log('[E2E 4c/10] Registrando total directo por comida desde la tarjeta de Cena (400 kcal / 30g prot)...');
+  await page.click('[data-add-meal-total="cena"]');
+  await page.waitForSelector('#quick-add-dialog[open]');
+  assert.equal(await page.locator('#quick-add-total-form').isVisible(), true);
+
+  await page.fill('#total-meal-name', 'Cena ligera');
+  await page.fill('#total-meal-kcal', '400');
+  await page.fill('#total-meal-protein', '30');
+
+  const totalPrevKcal = await page.locator('#total-meal-preview-kcal').textContent();
+  const totalPrevProt = await page.locator('#total-meal-preview-protein').textContent();
+  assert.match(totalPrevKcal, /400/);
+  assert.match(totalPrevProt, /30/);
+
+  await page.click('#btn-save-direct-meal-total');
+  await page.waitForSelector('#quick-add-dialog', { state: 'hidden' });
+
+  // 555 + 400 = 955 kcal
+  await page.waitForFunction(() => document.querySelector('#day-total-kcal')?.textContent?.includes('955'));
+  const dayProtText = await page.locator('#day-total-protein').textContent();
+  assert.match(dayProtText, /43\.5/); // 13.5 (avena) + 0 (carambola) + 30 (cena)
+  console.log('[PASS 4c/10] Total directo por comida registrado en un solo paso y reflejado en el diario (955 kcal)');
+
   console.log('[E2E 5/10] Registrando pesaje corporal con 2 decimales...');
   await page.click('[data-view="peso"]');
   await page.click('#btn-add-weight');
@@ -190,7 +213,8 @@ try {
   // Verificar fecha completa visible sin cortes con puntos suspensivos
   const dateTextEl = await page.locator('#weights-list-container .w-row-date').first().textContent();
   assert.ok(!dateTextEl.includes('...'), 'La fecha no debe cortarse con puntos suspensivos');
-  assert.match(dateTextEl, /octubre/i, 'La fecha debe contener el mes completo');
+  const currentMonthName = new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(new Date());
+  assert.match(dateTextEl, new RegExp(currentMonthName, 'i'), 'La fecha debe contener el mes completo');
 
   // Verificar botón de 3 puntos y menú contextual en el registro de peso
   const moreWeightBtn = page.locator('#weights-list-container [data-more-weight]').first();
@@ -225,9 +249,9 @@ try {
   await page.reload();
   await page.waitForLoadState('networkidle');
 
-  // En "Hoy", verificar que los 555 kcal persisten desde IndexedDB
+  // En "Hoy", verificar que los 955 kcal persisten desde IndexedDB
   const reloadedKcal = await page.locator('#day-total-kcal').textContent();
-  assert.match(reloadedKcal, /555/);
+  assert.match(reloadedKcal, /955/);
   console.log('[PASS 7/10] Persistencia 100% íntegra en IndexedDB verificada tras recarga');
 
   console.log('[E2E 8/10] Verificando protección contra recargas con datos sin guardar...');
@@ -246,11 +270,11 @@ try {
   page.on('dialog', async dialog => {
     await dialog.accept();
   });
-  await page.locator('[data-more-entry]').first().click();
-  await page.locator('[data-delete-entry]').first().click();
-  await page.waitForFunction(() => document.querySelector('#day-total-kcal')?.textContent?.includes('180') || document.querySelector('#day-total-kcal')?.textContent?.includes('375'));
-  await page.locator('[data-more-entry]').first().click();
-  await page.locator('[data-delete-entry]').first().click();
+  const entryCount = await page.locator('[data-more-entry]').count();
+  for (let i = 0; i < entryCount; i++) {
+    await page.locator('[data-more-entry]').first().click();
+    await page.locator('[data-delete-entry]').first().click();
+  }
   await page.waitForFunction(() => document.querySelector('#day-total-kcal')?.textContent === '0');
   console.log('[PASS 9/10] Flujo de eliminación e interacción nativa completado');
 

@@ -147,6 +147,7 @@ export function renderDashboard() {
       const protVal = (e.protein !== undefined && e.protein !== null) ? e.protein : computeNutrition(e).protein;
 
       const brandTag = e.brand ? `<span class="meal-item-brand">${esc(e.brand)}</span>` : '';
+      const detailText = (e.unit === 'comida') ? 'Total registrado' : `${fmt(e.amount)} ${esc(e.unit)}`;
       const protDisplay = protVal !== null
         ? `<span class="badge-prot">${fmt(protVal)} g prot</span>`
         : `<span class="badge-prot" style="opacity:.45;background:#f3f4f6;color:#6b7280">— prot</span>`;
@@ -155,7 +156,7 @@ export function renderDashboard() {
         <div class="meal-item">
           <div class="meal-item-main">
             <div class="meal-item-name">${esc(e.name)}${brandTag}</div>
-            <div class="meal-item-detail">${fmt(e.amount)} ${esc(e.unit)}</div>
+            <div class="meal-item-detail">${detailText}</div>
           </div>
           <div class="meal-item-side">
             <div class="item-nutri-badges">
@@ -186,6 +187,10 @@ export function renderDashboard() {
       `;
     }).join('')}</div>` : '<div class="meal-empty">Todavía no has registrado alimentos en esta comida</div>';
 
+    const countText = (list.length === 1 && list[0].unit === 'comida')
+      ? 'Total registrado'
+      : `${list.length} ingrediente${list.length === 1 ? '' : 's'}`;
+
     return `
       <article class="meal-card">
         <div class="meal-top">
@@ -193,7 +198,7 @@ export function renderDashboard() {
             <div class="meal-emoji" aria-hidden="true">${MEAL_ICONS[meal.id] || ''}</div>
             <div>
               <div class="meal-name">${meal.title}</div>
-              <div class="meal-count">${list.length} ingrediente${list.length === 1 ? '' : 's'}</div>
+              <div class="meal-count">${countText}</div>
             </div>
           </div>
           <div class="meal-totals-pill">
@@ -202,7 +207,13 @@ export function renderDashboard() {
           </div>
         </div>
         ${detail}
-        <button type="button" data-add-meal="${meal.id}" class="meal-add">＋ Añadir a ${meal.title.toLowerCase()}</button>
+        <div class="meal-card-actions">
+          <button type="button" data-add-meal-total="${meal.id}" class="meal-btn-total" aria-label="Registrar total de ${meal.title.toLowerCase()}">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <span>Total directo</span>
+          </button>
+          <button type="button" data-add-meal="${meal.id}" class="meal-add">＋ Ingredientes</button>
+        </div>
       </article>
     `;
   }).join('');
@@ -313,9 +324,15 @@ export function initDashboardListeners() {
       const btn = event.target.closest('button');
       if (!btn) return;
 
+      if (btn.dataset.addMealTotal) {
+        closeAllEntryMenus();
+        openQuickAdd(btn.dataset.addMealTotal, 'total');
+        return;
+      }
       if (btn.dataset.addMeal) {
         closeAllEntryMenus();
-        openQuickAdd(btn.dataset.addMeal);
+        openQuickAdd(btn.dataset.addMeal, 'library');
+        return;
       }
       if (btn.dataset.editEntry) {
         closeAllEntryMenus();
