@@ -1,4 +1,5 @@
-const CACHE_NAME = 'kalora-shell-v4.0.10';
+// Kalora PWA Build: 4.0.11 - Registro directo por comida
+const CACHE_NAME = 'kalora-shell-v4.0.11';
 const ASSETS = [
   './',
   './index.html',

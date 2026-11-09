@@ -122,10 +122,11 @@ export function initSettingsListeners() {
           toast('Sin conexión a internet');
           return;
         }
-        const { checkForUpdates } = await import('../../services/pwa/serviceWorker.js');
+        const { checkForUpdates, applyPendingUpdate } = await import('../../services/pwa/serviceWorker.js');
         const res = await checkForUpdates(undefined, true);
         if (res?.status === 'found') {
-          toast('Nueva versión detectada. Descargando...');
+          toast('Nueva versión detectada. Actualizando...');
+          setTimeout(() => applyPendingUpdate(true), 600);
         } else {
           toast(`Ya tienes la versión más reciente (${APP_DISPLAY_VERSION})`);
         }

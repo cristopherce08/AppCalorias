@@ -8,6 +8,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
+import { SW_CACHE_NAME, APP_DISPLAY_VERSION } from '../../src/utils/version.js';
 
 const PORT = 3458;
 const BASE_URL = `http://localhost:${PORT}/`;
@@ -160,8 +161,8 @@ try {
   });
   console.log('[PASS 3/7] Datos de usuario inyectados en IndexedDB con éxito');
 
-  // Ahora publicamos la versión kalora-shell-v4.0.10 en el servidor
-  console.log('[TEST-SW 4/7] Publicando sw.js versión kalora-shell-v4.0.10 y disparando actualización...');
+  // Ahora publicamos la versión activa en el servidor
+  console.log(`[TEST-SW 4/7] Publicando sw.js versión ${SW_CACHE_NAME} y disparando actualización...`);
   servedSwContent = fs.readFileSync('sw.js', 'utf8');
 
   // Disparar actualización en el navegador
@@ -232,8 +233,8 @@ try {
   const postKeys = await page.evaluate(() => caches.keys());
   console.log('[INFO] Claves de caché presentes post-activación:', postKeys);
 
-  // 1. La caché activa kalora-shell-v4.0.10 debe existir
-  assert.ok(postKeys.includes('kalora-shell-v4.0.10'), 'kalora-shell-v4.0.10 debe existir');
+  // 1. La caché activa debe existir
+  assert.ok(postKeys.includes(SW_CACHE_NAME), `${SW_CACHE_NAME} debe existir`);
 
   // 2. Las cachés obsoletas deben haber sido eliminadas
   assert.equal(postKeys.includes('kalora-shell-v4.0.2'), false, 'kalora-shell-v4.0.2 debe haber sido eliminada');
@@ -244,18 +245,18 @@ try {
   assert.ok(postKeys.includes('third-party-app-cache'), 'third-party-app-cache debe seguir protegida e intacta');
   console.log('[PASS 5/7] Purga selectiva verificada: solo las versiones obsoletas fueron eliminadas, cachés protegidas intactas');
 
-  // Verificar que los recursos se almacenaron en kalora-shell-v4.0.10
-  console.log('[TEST-SW 6/7] Verificando lectura de recursos aislados desde kalora-shell-v4.0.10...');
-  const hasAssetsInActiveCache = await page.evaluate(async () => {
-    const cache = await caches.open('kalora-shell-v4.0.10');
+  // Verificar que los recursos se almacenaron en la caché activa
+  console.log(`[TEST-SW 6/7] Verificando lectura de recursos aislados desde ${SW_CACHE_NAME}...`);
+  const hasAssetsInActiveCache = await page.evaluate(async (cacheName) => {
+    const cache = await caches.open(cacheName);
     const indexMatch = await cache.match('./index.html');
     const quickAddMatch = await cache.match('./src/features/meals/quickAddModal.js');
     if (!indexMatch || !quickAddMatch) return false;
     const quickAddText = await quickAddMatch.text();
     return quickAddText.includes('total_consumed') && quickAddText.includes('convertTotalToPer100');
-  });
-  assert.equal(hasAssetsInActiveCache, true, 'kalora-shell-v4.0.10 debe contener los scripts actualizados con la modalidad de valores totales');
-  console.log('[PASS 6/7] Recursos verificados y aislados dentro de kalora-shell-v4.0.10');
+  }, SW_CACHE_NAME);
+  assert.equal(hasAssetsInActiveCache, true, `${SW_CACHE_NAME} debe contener los scripts actualizados con la modalidad de valores totales`);
+  console.log(`[PASS 6/7] Recursos verificados y aislados dentro de ${SW_CACHE_NAME}`);
 
   // Probar navegación offline y verificación de persistencia IndexedDB
   console.log('[TEST-SW 7/7] Probando navegación offline (context.setOffline) y verificación de IndexedDB...');
@@ -270,7 +271,7 @@ try {
   // Ir a Ajustes en modo offline y comprobar versión
   await page.click('[data-view="ajustes"]');
   const versionText = await page.locator('#app-version-label').textContent();
-  assert.match(versionText, /Kalora · Versión 4\.0 · Build 4\.0\.10/);
+  assert.equal(versionText.trim(), APP_DISPLAY_VERSION);
 
   // Verificar que los datos en IndexedDB siguen existiendo al 100%
   const dbCheck = await page.evaluate(async () => {

@@ -140,6 +140,13 @@ function handleWaitingWorker(worker) {
  * @param {boolean} [force=false] Bypassear el intervalo mínimo de verificación
  */
 export async function checkForUpdates(registration = swRegistration, force = false) {
+  if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) {
+    return { status: 'unsupported' };
+  }
+  if (!registration) {
+    registration = swRegistration || (await navigator.serviceWorker.getRegistration());
+    if (registration) swRegistration = registration;
+  }
   if (!registration || !navigator.onLine) {
     return { status: !navigator.onLine ? 'offline' : 'no_registration' };
   }
@@ -151,7 +158,11 @@ export async function checkForUpdates(registration = swRegistration, force = fal
 
   try {
     const reg = await registration.update();
-    if (reg.installing || reg.waiting) {
+    if (reg.waiting) {
+      handleWaitingWorker(reg.waiting);
+      return { status: 'found' };
+    }
+    if (reg.installing) {
       return { status: 'found' };
     }
     return { status: 'latest' };
@@ -202,10 +213,13 @@ export function setupServiceWorker() {
 
     isRefreshing = true;
     sessionStorage.setItem('sw_last_reload', String(now));
-    window.location.reload();
+    toast('Actualizando a la última versión...');
+    setTimeout(() => {
+      window.location.reload();
+    }, 250);
   });
 
-  navigator.serviceWorker.register('./sw.js', { scope: './' })
+  navigator.serviceWorker.register('./sw.js', { scope: './', updateViaCache: 'none' })
     .then(registration => {
       swRegistration = registration;
 
@@ -224,7 +238,8 @@ export function setupServiceWorker() {
         });
       });
 
-      checkForUpdates(registration);
+      // Verificación inmediata al iniciar la app
+      checkForUpdates(registration, true);
 
       // Comprobaciones inteligentes al reanudar aplicación desde segundo plano en iOS
       document.addEventListener('visibilitychange', () => {
@@ -232,7 +247,7 @@ export function setupServiceWorker() {
           if (waitingWorker && !hasUnsavedChanges()) {
             applyPendingUpdate(false);
           } else {
-            checkForUpdates(registration);
+            checkForUpdates(registration, true);
           }
         }
       });
@@ -241,12 +256,12 @@ export function setupServiceWorker() {
         if (waitingWorker && !hasUnsavedChanges()) {
           applyPendingUpdate(false);
         } else {
-          checkForUpdates(registration);
+          checkForUpdates(registration, true);
         }
       });
 
       window.addEventListener('online', () => {
-        checkForUpdates(registration);
+        checkForUpdates(registration, true);
       });
 
       // Escuchar cuando se cierran diálogos para evaluar si la app quedó en reposo (idle)
