@@ -5,6 +5,7 @@ import { getState, setState, refreshState } from '../../app/state.js';
 import { navigateTo } from '../../app/router.js';
 import { fmt, esc } from '../../utils/formatting.js';
 import { dateText, todayISO, offsetDate, validDate } from '../../utils/dates.js';
+import { estimateAdaptiveTdee } from '../../utils/energy.js';
 import { computeNutrition, sumKcal, sumProtein, dayEntries, MEALS } from '../../utils/nutrition.js';
 import { deleteEntry as deleteEntryFromRepo } from '../../services/database/entriesRepo.js';
 import { setSetting } from '../../services/database/settingsRepo.js';
@@ -30,7 +31,7 @@ function syncTodayButton(currentDate = getState().currentDate) {
  * Renderiza la vista del diario con los datos del estado actual
  */
 export function renderDashboard() {
-  const { entries, settings, currentDate } = getState();
+  const { entries, weightEntries, settings, currentDate } = getState();
 
   const diaryDateInput = $('#diary-date');
   const datePretty = $('#date-pretty');
@@ -88,7 +89,13 @@ export function renderDashboard() {
       if (maintWrap) maintWrap.hidden = false;
       const maintText = $('#maint-ref-text');
       if (maintText) {
-        if (calcResult.isRange) {
+        const useAdaptive = settings.calcPrefs?.useAdaptive ?? settings.calcProfile?.useAdaptive;
+        const adaptive = useAdaptive
+          ? estimateAdaptiveTdee({ entries, weightEntries })
+          : null;
+        if (adaptive?.available) {
+          maintText.textContent = `~${fmt(adaptive.empiricalTdee)} kcal/día (calibrado)`;
+        } else if (calcResult.isRange) {
           maintText.textContent = `~${fmt(calcResult.tdeeMin)}–${fmt(calcResult.tdeeMax)} kcal/día`;
         } else {
           maintText.textContent = `~${fmt(calcResult.tdee)} kcal/día`;
@@ -132,7 +139,10 @@ export function renderDashboard() {
   if (pending && pending.oldGoal && pending.newTdee) {
     if (banner) banner.hidden = false;
     if (bannerText) {
-      bannerText.textContent = `Tu mantenimiento se recalculó a ${fmt(pending.newTdee)} kcal/día con tu peso reciente (${fmt(pending.newWeight)} kg). Tu meta actual sigue en ${fmt(pending.oldGoal)} kcal. ¿Deseas revisarla?`;
+      const targetPart = pending.recommendedGoal && pending.recommendedGoal !== pending.newTdee
+        ? ` y tu objetivo sugerido es ${fmt(pending.recommendedGoal)} kcal/día`
+        : '';
+      bannerText.textContent = `Tu mantenimiento se recalculó a ${fmt(pending.newTdee)} kcal/día con tu peso reciente (${fmt(pending.newWeight)} kg)${targetPart}. Tu meta actual sigue en ${fmt(pending.oldGoal)} kcal. ¿Deseas revisarla?`;
     }
   } else {
     if (banner) banner.hidden = true;

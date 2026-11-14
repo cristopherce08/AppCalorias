@@ -247,10 +247,10 @@
           <div><div class="eyebrow">GASTO ENERGÉTICO</div><h1 id="heading-calc">Calculadora</h1></div>
           <button type="button" id="btn-calc-back-diario" class="text-button">‹ Volver a Hoy</button>
         </div>
-        <p class="muted-intro">Estima tu gasto energético en reposo (RMR) y de mantenimiento (TDEE) mediante la ecuación validada <strong>Mifflin-St Jeor (1990)</strong>.</p>
+        <p class="muted-intro">Estima tu gasto energético en reposo (RMR) y de mantenimiento (TDEE) con <strong>Mifflin-St Jeor</strong>, <strong>Katch-McArdle</strong> (si conoces tu % de grasa) y calibración con tu historial real.</p>
 
         <!-- FORMULARIO DE LA CALCULADORA -->
-        <div class="settings-card">
+        <form id="calc-form" class="settings-card" novalidate>
           <h2>Datos para el cálculo</h2>
           <p class="muted">Puedes guardar estos datos en este iPhone para recalcular automáticamente cuando registres un nuevo peso.</p>
 
@@ -275,8 +275,16 @@
             </div>
           </div>
 
-          <label class="form-label" style="margin-top:8px">Parámetro fisiológico de la ecuación *</label>
-          <div class="base-type-toggle">
+          <label class="form-label">
+            % de grasa corporal (opcional — mayor precisión)
+            <input id="calc-body-fat" type="number" min="3" max="65" step="0.1" inputmode="decimal" placeholder="Ej.: 18 (usa Katch-McArdle según masa magra)" />
+          </label>
+          <p class="muted" id="calc-bf-hint" style="margin:-8px 0 12px;font-size:11px">
+            Si lo ingresas, el cálculo usa tu masa magra real (<strong>Katch-McArdle</strong>), mucho más precisa si tienes bastante músculo o grasa por encima/debajo del promedio.
+          </p>
+
+          <label class="form-label" style="margin-top:4px">Parámetro fisiológico de la ecuación *</label>
+          <div class="base-type-toggle tri-toggle">
             <label class="radio-pill">
               <input type="radio" name="calc-param" value="male" checked />
               <span>Masculino (+5)</span>
@@ -287,33 +295,82 @@
             </label>
             <label class="radio-pill">
               <input type="radio" name="calc-param" value="unspecified" />
-              <span>Sin especificar (intervalo)</span>
+              <span>Sin especificar</span>
             </label>
           </div>
-          <p class="param-explanation">
+          <p class="param-explanation" id="calc-param-note">
             <em>Nota fisiológica:</em> La fórmula Mifflin-St Jeor utiliza esta constante exclusivamente debido a diferencias estadísticas medias en masa magra libre de grasa observadas en estudios metabólicos. Si eliges «Sin especificar», se calculará un intervalo orientativo sin asumir un número único falsamente preciso.
           </p>
 
-          <label class="form-label" style="margin-top:14px">Nivel de actividad física diaria *</label>
-          <select id="calc-activity" class="activity-select" required>
-            <option value="1.20">Sedentario (x1.20) — Poco o ningún ejercicio, trabajo de escritorio</option>
-            <option value="1.375">Actividad ligera (x1.375) — Ejercicio ligero 1 a 3 días/semana</option>
-            <option value="1.55" selected>Actividad moderada (x1.55) — Ejercicio moderado 3 a 5 días/semana</option>
-            <option value="1.725">Actividad alta (x1.725) — Ejercicio intenso 6 a 7 días/semana</option>
-            <option value="1.90">Actividad muy alta (x1.90) — Atletas de competición o trabajo físico pesado</option>
-          </select>
-          <p class="muted" style="margin-top:6px;font-size:11.5px">Los factores son multiplicadores aproximados basados en promedios poblacionales, no mediciones de calorimetría directa.</p>
+          <label class="form-label" style="margin-top:10px">Método de actividad física *</label>
+          <div class="base-type-toggle" style="margin-bottom:10px">
+            <label class="radio-pill">
+              <input type="radio" name="calc-activity-mode" value="standard" checked />
+              <span>Factor rápido</span>
+            </label>
+            <label class="radio-pill">
+              <input type="radio" name="calc-activity-mode" value="detailed" />
+              <span>Pasos + Entrenos (preciso)</span>
+            </label>
+          </div>
 
-          <button type="button" id="btn-run-calculation" class="primary-button wide-button" style="margin-top:10px">
+          <div id="calc-activity-standard-wrap">
+            <label class="form-label" style="margin-bottom:6px">
+              Nivel de actividad física diaria *
+              <select id="calc-activity" class="activity-select" required>
+                <option value="1.20">Sedentario (x1.20) — Poco o ningún ejercicio, trabajo de escritorio</option>
+                <option value="1.375">Actividad ligera (x1.375) — Ejercicio ligero 1 a 3 días/semana</option>
+                <option value="1.55" selected>Actividad moderada (x1.55) — Ejercicio moderado 3 a 5 días/semana</option>
+                <option value="1.725">Actividad alta (x1.725) — Ejercicio intenso 6 a 7 días/semana</option>
+                <option value="1.90">Actividad muy alta (x1.90) — Atletas de competición o trabajo físico pesado</option>
+              </select>
+            </label>
+          </div>
+
+          <div id="calc-activity-detailed-wrap" hidden>
+            <label class="form-label">
+              Movimiento diario habitual (sin contar entrenamientos)
+              <select id="calc-neat" class="activity-select">
+                <option value="1.20">Escritorio / &lt; 4 000 pasos al día (x1.20)</option>
+                <option value="1.30" selected>Ligero / 4 000–7 000 pasos al día (x1.30)</option>
+                <option value="1.40">Activo / 7 000–10 000 pasos al día (x1.40)</option>
+                <option value="1.52">Muy activo / trabajo físico o &gt; 10 000 pasos (x1.52)</option>
+              </select>
+            </label>
+
+            <div class="form-grid">
+              <label class="form-label">
+                Entrenos / semana
+                <input id="calc-workout-days" type="number" min="0" max="14" step="1" inputmode="numeric" value="3" />
+              </label>
+              <label class="form-label">
+                Minutos / sesión
+                <input id="calc-workout-mins" type="number" min="0" max="360" step="5" inputmode="numeric" value="45" />
+              </label>
+            </div>
+
+            <label class="form-label" style="margin-bottom:6px">
+              Intensidad promedio del entrenamiento
+              <select id="calc-workout-intensity" class="activity-select">
+                <option value="3.5">Ligera — caminata rápida, yoga, movilidad (3.5 MET)</option>
+                <option value="5.5" selected>Moderada — pesas, bici moderada, trote suave (5.5 MET)</option>
+                <option value="8.0">Intensa — carrera, HIIT, natación o deporte continuo (8.0 MET)</option>
+              </select>
+            </label>
+          </div>
+
+          <p class="muted" style="margin-top:6px;font-size:11.5px">Separar tus pasos diarios de tus sesiones de ejercicio evita sobreestimar el gasto calórico por multiplicar todo el día con un factor genérico.</p>
+
+          <button type="submit" id="btn-run-calculation" class="primary-button wide-button" style="margin-top:10px">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px; margin-right:6px;" aria-hidden="true"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>Calcular gasto energético
           </button>
-        </div>
+        </form>
 
         <!-- TARJETA DE RESULTADOS DE LA CALCULADORA -->
         <div id="calc-results-card" class="settings-card result-card" hidden>
           <div class="result-header">
             <div>
-              <div class="eyebrow" style="color:#0f766e">ESTIMACIÓN ENERGÉTICA</div>
+              <div class="eyebrow" style="color:#0f766e" id="calc-formula-badge">ESTIMACIÓN ENERGÉTICA</div>
               <h2 id="calc-res-title">Resultados del cálculo</h2>
             </div>
             <span id="calc-res-date" class="result-date-badge">Hoy</span>
@@ -336,35 +393,51 @@
             Basado en 80 kg · 178 cm · 28 años · Actividad moderada (x1.55)
           </div>
 
+          <div id="calc-adaptive-box" class="adaptive-box">
+            <div class="adaptive-head">
+              <strong id="calc-adaptive-title">Calibración con tu historial real</strong>
+              <span id="calc-adaptive-badge" class="adaptive-badge" hidden></span>
+            </div>
+            <p id="calc-adaptive-desc" class="adaptive-desc"></p>
+            <button type="button" id="btn-toggle-adaptive-source" class="outline-button" style="margin-top:8px" hidden>Usar gasto real en escenarios</button>
+          </div>
+
           <div class="disclaimer-note">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right:4px;" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><strong>Aviso orientativo:</strong> Este resultado es una estimación matemática teórica y puede diferir de tu gasto metabólico real. No constituye una prescripción médica ni nutricional obligatoria.
           </div>
 
           <!-- ESCENARIOS ORIENTATIVOS SEGÚN INTENCIÓN -->
           <div class="scenarios-section">
-            <h3 style="font-size:14px;margin:14px 0 8px">Escenarios orientativos de ingesta:</h3>
+            <div class="scenarios-head-row">
+              <h3 style="font-size:14px;margin:0">Escenarios orientativos de ingesta:</h3>
+            </div>
+            <div id="calc-pace-toggle" class="pace-chips-row" role="group" aria-label="Intensidad de cambio">
+              <button type="button" class="chip" data-calc-pace="mild">Suave (±10%)</button>
+              <button type="button" class="chip active" data-calc-pace="moderate">Moderado (-15%/+12%)</button>
+              <button type="button" class="chip" data-calc-pace="strong">Marcado (-20%/+15%)</button>
+            </div>
             <div class="scenarios-list">
-              <div class="scenario-item active" data-scenario="maintain">
+              <button type="button" class="scenario-item active" data-scenario="maintain" aria-pressed="true">
                 <div>
                   <strong>Mantener peso (predeterminado)</strong>
-                  <span class="scenario-sub">Equilibrio energético estimado</span>
+                  <span class="scenario-sub" id="scen-sub-maintain">Equilibrio energético estimado</span>
                 </div>
                 <div class="scenario-kcal" id="scen-val-maintain">2,300 kcal</div>
-              </div>
-              <div class="scenario-item" data-scenario="loss">
+              </button>
+              <button type="button" class="scenario-item" data-scenario="loss" aria-pressed="false">
                 <div>
-                  <strong>Reducción gradual conservadora</strong>
-                  <span class="scenario-sub">Déficit moderado orientativo (~300 kcal/día)</span>
+                  <strong>Reducción gradual</strong>
+                  <span class="scenario-sub" id="scen-sub-loss">Déficit proporcional del 15 %</span>
                 </div>
-                <div class="scenario-kcal" id="scen-val-loss">2,000 kcal</div>
-              </div>
-              <div class="scenario-item" data-scenario="gain">
+                <div class="scenario-kcal" id="scen-val-loss">1,955 kcal</div>
+              </button>
+              <button type="button" class="scenario-item" data-scenario="gain" aria-pressed="false">
                 <div>
-                  <strong>Aumento gradual conservador</strong>
-                  <span class="scenario-sub">Superávit moderado orientativo (~300 kcal/día)</span>
+                  <strong>Aumento gradual</strong>
+                  <span class="scenario-sub" id="scen-sub-gain">Superávit proporcional del 12 %</span>
                 </div>
-                <div class="scenario-kcal" id="scen-val-gain">2,600 kcal</div>
-              </div>
+                <div class="scenario-kcal" id="scen-val-gain">2,576 kcal</div>
+              </button>
             </div>
             <p class="scenarios-disclaimer">
               Los cambios de peso no son lineales ni garantizados. Para menores de edad, embarazo, lactancia o condiciones médicas, no apliques restricciones calóricas sin supervisión sanitaria.
@@ -479,7 +552,7 @@
           <strong>Privacidad total</strong>
           <p>Sin cuentas, sin Firebase, sin rastreadores, sin analítica ni sincronización remota. Tu peso e información nutricional nunca salen de tu dispositivo.</p>
         </div>
-        <div class="version" id="app-version-label">Kalora · Versión 4.0 · Build 4.0.12</div>
+        <div class="version" id="app-version-label">Kalora · Versión 4.0 · Build 4.0.13</div>
       </section>
     </main>
 

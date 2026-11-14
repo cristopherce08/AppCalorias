@@ -255,7 +255,7 @@ try {
 
   console.log('[PASS 5/10] Pesaje corporal con 2 decimales (74.35 kg) registrado, stat card y menú de 3 puntos verificados');
 
-  console.log('[E2E 6/10] Calculadora de gasto energético Mifflin-St Jeor...');
+  console.log('[E2E 6/10] Calculadora de gasto energético (Mifflin-St Jeor, Katch-McArdle y NEAT + entreno)...');
   await page.click('[data-view="ajustes"]');
   await page.click('#btn-goto-calc');
   assert.equal(await page.locator('#view-calculadora').isVisible(), true);
@@ -269,7 +269,32 @@ try {
   await page.waitForSelector('#calc-results-card:not([hidden])');
   const tdeeText = await page.locator('#calc-res-tdee').textContent();
   assert.notEqual(tdeeText.trim(), '');
-  console.log('[PASS 6/10] Estimación de gasto energético ejecutada y mostrada');
+  assert.match(await page.locator('#calc-formula-badge').textContent(), /MIFFLIN-ST JEOR/);
+
+  // Probar cambio de intensidad de escenarios
+  const modLoss = await page.locator('#scen-val-loss').textContent();
+  await page.click('#calc-pace-toggle [data-calc-pace="mild"]');
+  const mildLoss = await page.locator('#scen-val-loss').textContent();
+  assert.notEqual(mildLoss, modLoss, 'Cambiar el ritmo debe recalcular los escenarios');
+
+  // Probar modo Katch-McArdle con % de grasa corporal + modo detallado NEAT + entreno
+  await page.fill('#calc-body-fat', '18');
+  await page.click('input[name="calc-activity-mode"][value="detailed"]');
+  await page.selectOption('#calc-neat', '1.30');
+  await page.fill('#calc-workout-days', '4');
+  await page.fill('#calc-workout-mins', '60');
+  await page.click('#btn-run-calculation');
+  await page.waitForFunction(() => document.querySelector('#calc-formula-badge')?.textContent?.includes('KATCH-MCARDLE'));
+  assert.match(await page.locator('#calc-meta-details').textContent(), /masa magra/);
+  assert.match(await page.locator('#calc-meta-details').textContent(), /entreno/);
+
+  // Restaurar modo estándar con factor 1.20 y validar persistencia del valor 1.20 tras recarga
+  await page.fill('#calc-body-fat', '');
+  await page.click('input[name="calc-activity-mode"][value="standard"]');
+  await page.selectOption('#calc-activity', '1.20');
+  await page.click('#btn-run-calculation');
+  await page.waitForFunction(() => document.querySelector('#calc-meta-details')?.textContent?.includes('Sedentario (x1.20)'));
+  console.log('[PASS 6/10] Calculadora mejorada verificada (Mifflin-St Jeor, Katch-McArdle, NEAT+entreno y ritmo)');
 
   console.log('[E2E 7/10] Comprobando persistencia tras recarga de página (F5)...');
   await page.reload();
@@ -278,6 +303,7 @@ try {
   // En "Hoy", verificar que los 955 kcal persisten desde IndexedDB
   const reloadedKcal = await page.locator('#day-total-kcal').textContent();
   assert.match(reloadedKcal, /955/);
+  assert.equal(await page.locator('#calc-activity').inputValue(), '1.20');
   console.log('[PASS 7/10] Persistencia 100% íntegra en IndexedDB verificada tras recarga');
 
   console.log('[E2E 8/10] Verificando protección contra recargas con datos sin guardar...');

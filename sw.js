@@ -1,5 +1,5 @@
-// Kalora PWA Build: 4.0.12 - Visibilidad condicional de Ir a Hoy
-const CACHE_NAME = 'kalora-shell-v4.0.12';
+// Kalora PWA Build: 4.0.13 - Calculadora precisa (Katch-McArdle, NEAT+entreno y calibración adaptativa)
+const CACHE_NAME = 'kalora-shell-v4.0.13';
 const ASSETS = [
   './',
   './index.html',

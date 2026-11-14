@@ -24,6 +24,8 @@ let state = {
   editingFoodId: null,
   editingWeightId: null,
   activeScenario: 'maintain',
+  activePace: 'moderate',
+  useAdaptiveTdee: false,
   isSaving: false,
   isExporting: false,
   isImporting: false

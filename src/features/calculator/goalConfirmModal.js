@@ -34,8 +34,13 @@ async function handleConfirmSetGoal(event) {
   }
 
   try {
-    const { settings } = getState();
+    const { settings, activeScenario, activePace, useAdaptiveTdee } = getState();
     await setSetting('goal', val);
+    await setSetting('calcPrefs', {
+      scenario: activeScenario,
+      pace: activePace,
+      useAdaptive: useAdaptiveTdee
+    });
     if (settings.pendingGoalReview) {
       await setSetting('pendingGoalReview', null);
     }

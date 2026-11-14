@@ -3,7 +3,7 @@
  */
 import { getState, refreshState, beginAsyncOperation, endAsyncOperation } from '../../app/state.js';
 import { makeId, todayISO, validDate } from '../../utils/dates.js';
-import { calculateMifflinStJeor } from '../../utils/energy.js';
+import { calculateEnergyExpenditure, getScenarioTargetKcal } from '../../utils/energy.js';
 import { saveWeightEntry } from '../../services/database/weightRepo.js';
 import { setSetting } from '../../services/database/settingsRepo.js';
 import { openModal, closeModal } from '../../components/Modal.js';
@@ -82,12 +82,19 @@ async function handleSaveWeightEntry(event) {
     if (isLatest && settings.calcProfile) {
       try {
         const prof = { ...settings.calcProfile };
-        const newResult = calculateMifflinStJeor({
+        const prevTdee = settings.calcResult?.tdee || null;
+        const newResult = calculateEnergyExpenditure({
           weightKg: weight,
           heightCm: prof.height,
           ageYears: prof.age,
-          physiologicalParam: prof.param,
-          activityMultiplier: Number(prof.activity)
+          physiologicalParam: prof.param || 'male',
+          bodyFatPct: prof.bodyFatPct ?? null,
+          activityMode: prof.activityMode || 'standard',
+          activityMultiplier: Number(prof.activity || 1.55),
+          neatFactor: Number(prof.neatFactor || 1.30),
+          workoutsPerWeek: Number(prof.workoutsPerWeek || 0),
+          workoutMinutes: Number(prof.workoutMinutes || 0),
+          workoutMet: Number(prof.workoutMet || 5.5)
         });
 
         prof.weight = weight;
@@ -103,10 +110,18 @@ async function handleSaveWeightEntry(event) {
         await setSetting('calcProfile', prof);
         await setSetting('calcResult', updatedResultData);
 
-        if (settings.goal > 0 && Math.abs(settings.goal - updatedResultData.tdee) >= 20) {
+        const prefs = settings.calcPrefs || prof;
+        const scenario = prefs.scenario || 'maintain';
+        const pace = prefs.pace || 'moderate';
+        const recommendedGoal = getScenarioTargetKcal(updatedResultData.tdee, scenario, pace);
+        const tdeeShifted = prevTdee ? Math.abs(updatedResultData.tdee - prevTdee) >= 25 : true;
+
+        if (settings.goal > 0 && tdeeShifted && Math.abs(settings.goal - recommendedGoal) >= 20) {
           const pending = {
             oldGoal: settings.goal,
             newTdee: updatedResultData.tdee,
+            recommendedGoal,
+            scenario,
             newWeight: weight
           };
           await setSetting('pendingGoalReview', pending);
