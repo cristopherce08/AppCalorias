@@ -93,6 +93,32 @@ try {
   assert.equal(navAddIndex, 2, 'El botón Agregar debe ser el tercer elemento (índice 2, en el centro de 5 accesos)');
   console.log('[PASS 2/10] Navegación, versionado y botón Agregar en el centro verificados');
 
+  console.log('[E2E 2b/10] Verificando visibilidad condicional del botón "Ir a Hoy"...');
+  const todayBtn = page.locator('#btn-today');
+  const todayValue = await page.locator('#diary-date').inputValue();
+  assert.equal(await todayBtn.isVisible(), false, 'El botón "Ir a Hoy" debe permanecer oculto en el día actual');
+
+  await page.click('#btn-prev-date');
+  assert.equal(await todayBtn.isVisible(), true, 'El botón "Ir a Hoy" debe mostrarse al retroceder a un día anterior');
+
+  await todayBtn.click();
+  assert.equal(await todayBtn.isVisible(), false, 'El botón "Ir a Hoy" debe ocultarse tras volver al día actual');
+  assert.equal(await page.locator('#diary-date').inputValue(), todayValue);
+
+  await page.click('#btn-next-date');
+  assert.equal(await todayBtn.isVisible(), true, 'El botón "Ir a Hoy" debe mostrarse al avanzar a un día futuro');
+
+  await page.click('#btn-prev-date');
+  assert.equal(await todayBtn.isVisible(), false, 'El botón "Ir a Hoy" debe ocultarse al regresar al día actual con ›/‹');
+
+  await page.fill('#diary-date', '2026-01-15');
+  assert.equal(await todayBtn.isVisible(), true, 'El botón "Ir a Hoy" debe mostrarse al elegir otra fecha en el selector');
+
+  await todayBtn.click();
+  assert.equal(await todayBtn.isVisible(), false, 'El botón "Ir a Hoy" debe ocultarse nuevamente al volver a hoy');
+  assert.equal(await page.locator('#diary-date').inputValue(), todayValue);
+  console.log('[PASS 2b/10] Visibilidad condicional del botón "Ir a Hoy" verificada');
+
   console.log('[E2E 3/10] Creando alimento en la biblioteca y marcando favorito...');
   await page.click('[data-view="alimentos"]');
   await page.click('#btn-create-food');

@@ -1,5 +1,5 @@
-// Kalora PWA Build: 4.0.11 - Registro directo por comida
-const CACHE_NAME = 'kalora-shell-v4.0.11';
+// Kalora PWA Build: 4.0.12 - Visibilidad condicional de Ir a Hoy
+const CACHE_NAME = 'kalora-shell-v4.0.12';
 const ASSETS = [
   './',
   './index.html',

@@ -16,6 +16,17 @@ import { openEditEntry } from '../meals/editEntryModal.js';
 const $ = sel => document.querySelector(sel);
 
 /**
+ * Muestra el botón "Ir a Hoy" únicamente cuando la fecha activa es distinta al día actual
+ * @param {string} [currentDate]
+ */
+function syncTodayButton(currentDate = getState().currentDate) {
+  const todayBtn = $('#btn-today');
+  if (todayBtn) {
+    todayBtn.hidden = (currentDate === todayISO());
+  }
+}
+
+/**
  * Renderiza la vista del diario con los datos del estado actual
  */
 export function renderDashboard() {
@@ -25,6 +36,7 @@ export function renderDashboard() {
   const datePretty = $('#date-pretty');
   if (diaryDateInput) diaryDateInput.value = currentDate;
   if (datePretty) datePretty.textContent = dateText(currentDate);
+  syncTodayButton(currentDate);
 
   const day = dayEntries(entries, currentDate);
   const totalKcal = sumKcal(day);
@@ -356,6 +368,13 @@ export function initDashboardListeners() {
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape') {
       closeAllEntryMenus();
+    }
+  });
+
+  // Reevaluar el botón "Ir a Hoy" al volver a primer plano por si cambió el día calendario
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      syncTodayButton();
     }
   });
 }
